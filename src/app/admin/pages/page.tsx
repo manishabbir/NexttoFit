@@ -82,7 +82,7 @@ export default function AdminPagesPage() {
 
       if (res.ok) {
         toast.success(`${pageMeta[editingPage]?.name || editingPage} saved successfully!`);
-        setSavedPages(new Set([...savedPages, editingPage]));
+        setSavedPages(new Set(Array.from(savedPages).concat([editingPage])));
       } else {
         toast.error("Failed to save page content");
       }
