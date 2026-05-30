@@ -33,9 +33,9 @@ export default function ShippingReturnsPage() {
       <div className="space-y-8">
         {sections.map((section: any, i: number) => {
           const Icon = iconMap[section.icon as string] || Shield;
-          const items = section.items || [];
+          const items = Array.isArray(section.items) ? section.items : [];
           return (
-            <motion.div key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="rounded-2xl border border-border bg-card p-6">
+            <motion.div key={section.title || i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="rounded-2xl border border-border bg-card p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="rounded-lg bg-gold-500/10 p-3"><Icon className="h-5 w-5 text-gold-500" /></div>
                 <h2 className="text-xl font-semibold">{section.title}</h2>

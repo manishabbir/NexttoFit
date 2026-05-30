@@ -134,6 +134,31 @@ export default function AdminPagesPage() {
     });
   };
 
+  const updateArrayItem = (key: string, index: number, subKey: string, value: string) => {
+    setContent((prev) => {
+      const arr = [...(prev[key] || [])];
+      if (!arr[index]) return prev;
+      arr[index] = { ...arr[index], [subKey]: value };
+      return { ...prev, [key]: arr };
+    });
+  };
+
+  const updateStringArrayItem = (key: string, nestedIndex: number | null, nestedKey: string | null, itemIndex: number, value: string) => {
+    setContent((prev) => {
+      if (nestedIndex === null || !nestedKey) {
+        const arr = [...(prev[key] || [])];
+        arr[itemIndex] = value;
+        return { ...prev, [key]: arr };
+      }
+      const arr = [...(prev[key] || [])];
+      if (!arr[nestedIndex]) return prev;
+      const nestedArr = [...(arr[nestedIndex][nestedKey] || [])];
+      nestedArr[itemIndex] = value;
+      arr[nestedIndex] = { ...arr[nestedIndex], [nestedKey]: nestedArr };
+      return { ...prev, [key]: arr };
+    });
+  };
+
   const filteredPages = Object.entries(pageMeta)
     .filter(([_, meta]) => filter === "All" || meta.type === filter)
     .filter(([_, meta]) => meta.name.toLowerCase().includes(search.toLowerCase()));
@@ -161,7 +186,13 @@ export default function AdminPagesPage() {
         </div>
 
         <div className="max-w-4xl space-y-6">
-          <PageEditor content={content} updateContent={updateContent} updateNestedContent={updateNestedContent} pageName={editingPage} />
+          <PageEditor
+            content={content}
+            updateContent={updateContent}
+            updateNestedContent={updateNestedContent}
+            updateArrayItem={updateArrayItem}
+            updateStringArrayItem={updateStringArrayItem}
+          />
         </div>
       </div>
     );
@@ -235,11 +266,22 @@ export default function AdminPagesPage() {
   );
 }
 
-function PageEditor({ content, updateContent, updateNestedContent, pageName }: { content: PageContent; updateContent: (key: string, value: any) => void; updateNestedContent: (path: string[], value: any) => void; pageName: string }) {
+function PageEditor({
+  content,
+  updateContent,
+  updateNestedContent,
+  updateArrayItem,
+  updateStringArrayItem,
+}: {
+  content: PageContent;
+  updateContent: (key: string, value: any) => void;
+  updateNestedContent: (path: string[], value: any) => void;
+  updateArrayItem: (key: string, index: number, subKey: string, value: string) => void;
+  updateStringArrayItem: (key: string, nestedIndex: number | null, nestedKey: string | null, itemIndex: number, value: string) => void;
+}) {
   const renderField = (key: string, value: any, path: string[] = []) => {
-    const fullPath = [...path, key];
-
     if (Array.isArray(value)) {
+      // Array of objects (e.g. features, sections, questions, info)
       if (value.length > 0 && typeof value[0] === "object") {
         return (
           <div key={key} className="rounded-2xl border border-border bg-card p-6">
@@ -247,24 +289,67 @@ function PageEditor({ content, updateContent, updateNestedContent, pageName }: {
             <div className="space-y-4">
               {value.map((item: any, index: number) => (
                 <div key={index} className="rounded-xl border border-border p-4 space-y-3">
-                  {Object.entries(item).map(([itemKey, itemValue]) => (
-                    <div key={itemKey}>
-                      <label className="text-xs font-medium mb-1 block capitalize">{itemKey.replace(/-/g, " ")}</label>
-                      {typeof itemValue === "string" && itemValue.length > 80 ? (
-                        <textarea value={itemValue as string} onChange={(e) => {
-                          const newArray = [...value];
-                          newArray[index] = { ...item, [itemKey]: e.target.value };
-                          updateContent(key, newArray);
-                        }} rows={3} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none resize-none" />
-                      ) : (
-                        <input type="text" value={itemValue as string} onChange={(e) => {
-                          const newArray = [...value];
-                          newArray[index] = { ...item, [itemKey]: e.target.value };
-                          updateContent(key, newArray);
-                        }} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" />
-                      )}
-                    </div>
-                  ))}
+                  {Object.entries(item).map(([itemKey, itemValue]) => {
+                    // Handle nested string arrays (e.g. items: ["item1", "item2"])
+                    if (Array.isArray(itemValue) && itemValue.length > 0 && typeof itemValue[0] === "string") {
+                      return (
+                        <div key={itemKey}>
+                          <label className="text-xs font-medium mb-1 block capitalize">{itemKey.replace(/-/g, " ")}</label>
+                          <div className="space-y-1.5">
+                            {(itemValue as string[]).map((str: string, si: number) => (
+                              <div key={si} className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground w-4">{si + 1}.</span>
+                                <input
+                                  type="text"
+                                  value={str}
+                                  onChange={(e) => {
+                                    const newContent = { ...content };
+                                    const arr = [...(newContent[key] || [])];
+                                    const nestedArr = [...(arr[index][itemKey] || [])];
+                                    nestedArr[si] = e.target.value;
+                                    arr[index] = { ...arr[index], [itemKey]: nestedArr };
+                                    updateContent(key, arr);
+                                  }}
+                                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    // Regular string or number fields in objects
+                    return (
+                      <div key={itemKey}>
+                        <label className="text-xs font-medium mb-1 block capitalize">{itemKey.replace(/-/g, " ")}</label>
+                        {typeof itemValue === "string" && (itemValue as string).length > 80 ? (
+                          <textarea
+                            value={itemValue as string}
+                            onChange={(e) => {
+                              const newContent = { ...content };
+                              const arr = [...(newContent[key] || [])];
+                              arr[index] = { ...arr[index], [itemKey]: e.target.value };
+                              updateContent(key, arr);
+                            }}
+                            rows={3}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none resize-none"
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={itemValue as string}
+                            onChange={(e) => {
+                              const newContent = { ...content };
+                              const arr = [...(newContent[key] || [])];
+                              arr[index] = { ...arr[index], [itemKey]: e.target.value };
+                              updateContent(key, arr);
+                            }}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -272,6 +357,7 @@ function PageEditor({ content, updateContent, updateNestedContent, pageName }: {
         );
       }
 
+      // Array of plain strings (e.g. tags)
       if (value.length > 0 && typeof value[0] === "string") {
         return (
           <div key={key} className="rounded-2xl border border-border bg-card p-6">
@@ -280,11 +366,16 @@ function PageEditor({ content, updateContent, updateNestedContent, pageName }: {
               {value.map((item: string, index: number) => (
                 <div key={index} className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">{index + 1}.</span>
-                  <input type="text" value={item} onChange={(e) => {
-                    const newArray = [...value];
-                    newArray[index] = e.target.value;
-                    updateContent(key, newArray);
-                  }} className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" />
+                  <input
+                    type="text"
+                    value={item}
+                    onChange={(e) => {
+                      const newArray = [...value];
+                      newArray[index] = e.target.value;
+                      updateContent(key, newArray);
+                    }}
+                    className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
+                  />
                 </div>
               ))}
             </div>
@@ -293,7 +384,8 @@ function PageEditor({ content, updateContent, updateNestedContent, pageName }: {
       }
     }
 
-    if (typeof value === "object" && value !== null) {
+    // Object with specific known keys (e.g. cta with title, description, buttonText, buttonLink)
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       if (["title", "description", "buttonText", "buttonLink"].some((k) => k in value)) {
         return (
           <div key={key} className="rounded-2xl border border-border bg-card p-6">
@@ -302,7 +394,12 @@ function PageEditor({ content, updateContent, updateNestedContent, pageName }: {
               {Object.entries(value).map(([subKey, subValue]) => (
                 <div key={subKey}>
                   <label className="text-xs font-medium mb-1 block capitalize">{subKey.replace(/-/g, " ")}</label>
-                  <input type="text" value={subValue as string} onChange={(e) => updateNestedContent([key, subKey], e.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" />
+                  <input
+                    type="text"
+                    value={subValue as string}
+                    onChange={(e) => updateNestedContent([key, subKey], e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
+                  />
                 </div>
               ))}
             </div>
@@ -311,12 +408,18 @@ function PageEditor({ content, updateContent, updateNestedContent, pageName }: {
       }
     }
 
+    // Plain strings
     if (typeof value === "string") {
       if (value.startsWith("<")) {
         return (
           <div key={key} className="rounded-2xl border border-border bg-card p-6">
             <h3 className="text-lg font-semibold mb-4 capitalize">{key.replace(/-/g, " ")}</h3>
-            <textarea value={value} onChange={(e) => updateContent(key, e.target.value)} rows={10} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-mono focus:border-gold-500 focus:outline-none resize-none" />
+            <textarea
+              value={value}
+              onChange={(e) => updateContent(key, e.target.value)}
+              rows={10}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-mono focus:border-gold-500 focus:outline-none resize-none"
+            />
             <p className="text-xs text-muted-foreground mt-1">HTML content supported</p>
           </div>
         );
@@ -326,9 +429,19 @@ function PageEditor({ content, updateContent, updateNestedContent, pageName }: {
         <div key={key} className="rounded-2xl border border-border bg-card p-6">
           <h3 className="text-lg font-semibold mb-4 capitalize">{key.replace(/-/g, " ")}</h3>
           {value.length > 80 ? (
-            <textarea value={value} onChange={(e) => updateContent(key, e.target.value)} rows={3} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:border-gold-500 focus:outline-none resize-none" />
+            <textarea
+              value={value}
+              onChange={(e) => updateContent(key, e.target.value)}
+              rows={3}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:border-gold-500 focus:outline-none resize-none"
+            />
           ) : (
-            <input type="text" value={value} onChange={(e) => updateContent(key, e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:border-gold-500 focus:outline-none" />
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => updateContent(key, e.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:border-gold-500 focus:outline-none"
+            />
           )}
         </div>
       );
