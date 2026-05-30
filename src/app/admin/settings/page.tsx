@@ -5,6 +5,13 @@ import { motion } from "framer-motion";
 import { Save, Globe, Mail, Bell, Shield, Truck, Percent, CreditCard, DollarSign } from "lucide-react";
 import toast from "react-hot-toast";
 
+interface AnnouncementSettings {
+  enabled: boolean;
+  text: string;
+  highlightText: string;
+  couponCode: string;
+}
+
 interface StoreSettings {
   storeName: string;
   email: string;
@@ -17,6 +24,7 @@ interface StoreSettings {
   enableCard: boolean;
   enableEasyPaisa: boolean;
   enableBankTransfer: boolean;
+  announcement: AnnouncementSettings;
 }
 
 const defaultSettings: StoreSettings = {
@@ -31,6 +39,12 @@ const defaultSettings: StoreSettings = {
   enableCard: true,
   enableEasyPaisa: true,
   enableBankTransfer: false,
+  announcement: {
+    enabled: true,
+    text: "FREE SHIPPING ·",
+    highlightText: "on orders over ₹5,000",
+    couponCode: "WELCOME20",
+  },
 };
 
 export default function AdminSettingsPage() {
@@ -69,6 +83,7 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
           settings: {
             store_settings: JSON.stringify(settings),
+            announcement_bar: JSON.stringify(settings.announcement),
           },
         }),
       });
@@ -93,6 +108,7 @@ export default function AdminSettingsPage() {
 
   const tabs = [
     { id: "general", label: "General", icon: Globe },
+    { id: "announcement", label: "Announcement Bar", icon: Bell },
     { id: "checkout", label: "Checkout", icon: CreditCard },
     { id: "shipping", label: "Shipping", icon: Truck },
   ];
@@ -158,6 +174,50 @@ export default function AdminSettingsPage() {
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Store Phone</label>
                 <input type="tel" value={settings.phone} onChange={(e) => update("phone", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
+              </div>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
+                <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
+              </button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Announcement Bar Settings */}
+        {activeTab === "announcement" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Bell className="h-5 w-5 text-gold-500" /> Announcement Bar</h2>
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="flex items-center justify-between rounded-xl border border-border p-4">
+                <div>
+                  <p className="text-sm font-medium">Show Announcement Bar</p>
+                  <p className="text-xs text-muted-foreground">Toggle the top announcement banner on/off</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, enabled: !prev.announcement.enabled } }))}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${settings.announcement.enabled ? "bg-gold-500" : "bg-muted"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${settings.announcement.enabled ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Announcement Text</label>
+                <input type="text" value={settings.announcement.text} onChange={(e) => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, text: e.target.value } }))} placeholder="FREE SHIPPING ·" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Highlight Text</label>
+                <input type="text" value={settings.announcement.highlightText} onChange={(e) => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, highlightText: e.target.value } }))} placeholder="on orders over ₹5,000" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Coupon Code</label>
+                <input type="text" value={settings.announcement.couponCode} onChange={(e) => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, couponCode: e.target.value } }))} placeholder="WELCOME20" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
+              </div>
+              <div className="rounded-xl bg-muted/50 p-4">
+                <h3 className="text-sm font-medium mb-2">Preview</h3>
+                <div className="rounded-lg bg-gradient-to-r from-luxury-950 via-gold-800 to-luxury-950 p-3 text-center text-xs text-white uppercase tracking-wider">
+                  {settings.announcement.text} <span className="text-gold-300">{settings.announcement.highlightText}</span>
+                  {settings.announcement.couponCode ? ` · Use code: ${settings.announcement.couponCode}` : ""}
+                </div>
               </div>
               <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
                 <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
