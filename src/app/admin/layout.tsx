@@ -23,6 +23,7 @@ import {
   Briefcase,
   Gift,
   Layers,
+  ArrowDownToLine,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ const sidebarItems = [
   { name: "Careers", href: "/admin/careers", icon: Briefcase },
   { name: "Gift Cards", href: "/admin/gift-cards", icon: Gift },
   { name: "Pages", href: "/admin/pages", icon: Layers },
+  { name: "Footer", href: "/admin/footer", icon: ArrowDownToLine },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
