@@ -5,50 +5,88 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 
-const heroSlides = [
+interface Banner {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  imageUrl: string;
+  linkUrl: string;
+  linkText: string;
+  order: number;
+  isActive: boolean;
+}
+
+const defaultBanners: Banner[] = [
   {
-    id: 1,
+    id: "default-1",
     title: "ELEVATE YOUR",
     subtitle: "EVERYDAY STYLE",
     description: "Premium craftsmanship meets modern sophistication. Discover our latest collection designed for the discerning gentleman.",
-    cta: "Shop Men's Collection",
-    href: "/men",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80",
-    align: "left",
+    linkText: "Shop Men's Collection",
+    linkUrl: "/men",
+    imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80",
+    order: 1,
+    isActive: true,
   },
   {
-    id: 2,
+    id: "default-2",
     title: "REDEFINING",
     subtitle: "FEMININE ELEGANCE",
     description: "From timeless classics to contemporary designs, explore fashion that celebrates your unique style.",
-    cta: "Shop Women's Collection",
-    href: "/women",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1920&q=80",
-    align: "right",
+    linkText: "Shop Women's Collection",
+    linkUrl: "/women",
+    imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1920&q=80",
+    order: 2,
+    isActive: true,
   },
   {
-    id: 3,
+    id: "default-3",
     title: "NEW SEASON",
     subtitle: "NOW ARRIVING",
     description: "Be the first to explore our latest drops. Fresh styles, bold designs, and unmatched quality await.",
-    cta: "View New Arrivals",
-    href: "/new-arrivals",
-    image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1920&q=80",
-    align: "left",
+    linkText: "View New Arrivals",
+    linkUrl: "/new-arrivals",
+    imageUrl: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1920&q=80",
+    order: 3,
+    isActive: true,
   },
 ];
 
 export function HeroSection() {
+  const [slides, setSlides] = useState<Banner[]>(defaultBanners);
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
 
   useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const fetchBanners = async () => {
+    try {
+      const res = await fetch("/api/banners");
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const activeBanners = data
+          .filter((b: Banner) => b.isActive)
+          .sort((a: Banner, b: Banner) => a.order - b.order);
+        if (activeBanners.length > 0) {
+          setSlides(activeBanners);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
     const timer = setInterval(() => {
       setDirection(1);
-      setCurrent((prev) => (prev + 1) % heroSlides.length);
+      setCurrent((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
   const goToSlide = (index: number) => {
     setDirection(index > current ? 1 : -1);
@@ -57,15 +95,17 @@ export function HeroSection() {
 
   const goNext = () => {
     setDirection(1);
-    setCurrent((prev) => (prev + 1) % heroSlides.length);
+    setCurrent((prev) => (prev + 1) % slides.length);
   };
 
   const goPrev = () => {
     setDirection(-1);
-    setCurrent((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  const slide = heroSlides[current];
+  const slide = slides[current];
+
+  if (!slide) return null;
 
   const variants = {
     enter: (direction: number) => ({
@@ -82,9 +122,11 @@ export function HeroSection() {
     }),
   };
 
+  // Determine alignment (alternate for visual variety)
+  const align = current % 2 === 0 ? "left" : "right";
+
   return (
     <section className="relative h-[80vh] min-h-[600px] max-h-[900px] overflow-hidden">
-      {/* Slides */}
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={slide.id}
@@ -96,27 +138,25 @@ export function HeroSection() {
           transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="absolute inset-0"
         >
-          {/* Background Image */}
           <div className="absolute inset-0">
             <img
-              src={slide.image}
+              src={slide.imageUrl}
               alt={slide.title}
               className="h-full w-full object-cover"
             />
             <div
               className={`absolute inset-0 ${
-                slide.align === "left"
+                align === "left"
                   ? "bg-gradient-to-r from-black/80 via-black/50 to-transparent"
                   : "bg-gradient-to-l from-black/80 via-black/50 to-transparent"
               }`}
             />
           </div>
 
-          {/* Content */}
           <div className="relative h-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div
               className={`flex h-full flex-col justify-center ${
-                slide.align === "left" ? "items-start" : "items-end text-right"
+                align === "left" ? "items-start" : "items-end text-right"
               }`}
             >
               <motion.span
@@ -142,7 +182,7 @@ export function HeroSection() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
                 className={`mt-6 max-w-lg text-base leading-relaxed text-white/70 sm:text-lg ${
-                  slide.align === "right" ? "text-right" : ""
+                  align === "right" ? "text-right" : ""
                 }`}
               >
                 {slide.description}
@@ -154,10 +194,10 @@ export function HeroSection() {
                 className="mt-8"
               >
                 <Link
-                  href={slide.href}
+                  href={slide.linkUrl}
                   className="group inline-flex items-center gap-2 rounded-full bg-gold-500 px-8 py-4 text-sm font-semibold text-black transition-all hover:bg-gold-600 hover:shadow-lg hover:shadow-gold-500/25"
                 >
-                  {slide.cta}
+                  {slide.linkText}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </motion.div>
@@ -166,25 +206,28 @@ export function HeroSection() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={goPrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-all hover:bg-white/20"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
-      <button
-        onClick={goNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-all hover:bg-white/20"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </button>
+      {slides.length > 1 && (
+        <>
+          <button
+            onClick={goPrev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            onClick={goNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-all hover:bg-white/20"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </>
+      )}
 
       {/* Dots */}
       <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 flex gap-3">
-        {heroSlides.map((_, index) => (
+        {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
