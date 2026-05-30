@@ -1,27 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
 import { toast } from "sonner";
 
+const iconMap: Record<string, React.ElementType> = { Mail, Phone, MapPin, Clock };
+
 export default function ContactPage() {
+  const [content, setContent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetch("/api/pages?page=contact")
+      .then((res) => res.json())
+      .then((data) => { if (data?.content) setContent(data.content); })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
-    toast.success("Message sent! We'll get back to you soon.");
-    setForm({ name: "", email: "", subject: "", message: "" });
-    setTimeout(() => setSent(false), 3000);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setSent(true);
+        toast.success("Message sent! We'll get back to you soon.");
+        setForm({ name: "", email: "", subject: "", message: "" });
+        setTimeout(() => setSent(false), 3000);
+      }
+    } catch {
+      toast.error("Failed to send message");
+    }
   };
+
+  if (loading || !content) {
+    return <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8"><div className="animate-pulse space-y-4"><div className="h-12 w-64 rounded bg-muted mx-auto" /><div className="h-6 w-96 rounded bg-muted mx-auto" /></div></div>;
+  }
+
+  const infoItems = content.info || [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
-        <h1 className="font-display text-4xl font-bold md:text-5xl">Contact Us</h1>
-        <p className="mt-4 text-lg text-muted-foreground">We'd love to hear from you</p>
+        <h1 className="font-display text-4xl font-bold md:text-5xl">{content.title || "Contact Us"}</h1>
+        <p className="mt-4 text-lg text-muted-foreground">{content.subtitle}</p>
       </motion.div>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -54,22 +83,20 @@ export default function ContactPage() {
         </div>
 
         <div className="space-y-4">
-          {[
-            { icon: MapPin, label: "Visit Us", value: "Lahore, Pakistan" },
-            { icon: Phone, label: "Call Us", value: "+92 300 1234567" },
-            { icon: Mail, label: "Email Us", value: "hello@nextfitt.com" },
-            { icon: Clock, label: "Working Hours", value: "Mon - Sat: 10AM - 8PM" },
-          ].map((item, i) => (
-            <motion.div key={item.label} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.1 }} className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-4">
-                <div className="rounded-lg bg-gold-500/10 p-3"><item.icon className="h-5 w-5 text-gold-500" /></div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{item.label}</p>
-                  <p className="text-sm font-medium">{item.value}</p>
+          {infoItems.map((item: any, i: number) => {
+            const Icon = iconMap[item.icon as string] || MapPin;
+            return (
+              <motion.div key={item.label} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.1 }} className="rounded-xl border border-border bg-card p-5">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-lg bg-gold-500/10 p-3"><Icon className="h-5 w-5 text-gold-500" /></div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{item.label}</p>
+                    <p className="text-sm font-medium">{item.value}</p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>
