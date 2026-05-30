@@ -19,6 +19,10 @@ import {
   ChevronRight,
   Menu,
   X,
+  MessageSquare,
+  Briefcase,
+  Gift,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +34,10 @@ const sidebarItems = [
   { name: "Banners", href: "/admin/banners", icon: Image },
   { name: "Coupons", href: "/admin/coupons", icon: Tag },
   { name: "Blog", href: "/admin/blog", icon: FileText },
+  { name: "Messages", href: "/admin/messages", icon: MessageSquare },
+  { name: "Careers", href: "/admin/careers", icon: Briefcase },
+  { name: "Gift Cards", href: "/admin/gift-cards", icon: Gift },
+  { name: "Pages", href: "/admin/pages", icon: Layers },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
