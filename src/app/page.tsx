@@ -4,6 +4,16 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Shield, Truck, RotateCcw } from "lucide-react";
+import { useState, useEffect } from "react";
+
+const iconMap: Record<string, React.ElementType> = { Truck, Shield, RotateCcw, Sparkles };
+
+const defaultFeatures = [
+  { icon: "Truck", title: "Free Shipping", description: "On orders over Rs5,000" },
+  { icon: "Shield", title: "Secure Payment", description: "100% secure checkout" },
+  { icon: "RotateCcw", title: "Easy Returns", description: "30-day return policy" },
+  { icon: "Sparkles", title: "Premium Quality", description: "Handcrafted with care" },
+];
 
 // Mock data for featured products
 const featuredProducts = [
@@ -126,7 +136,7 @@ const categories = [
   },
 ];
 
-const features = [
+const featuresData = [
   {
     icon: Truck,
     title: "Free Shipping",
@@ -150,6 +160,22 @@ const features = [
 ];
 
 export default function HomePage() {
+  const [features, setFeatures] = useState(defaultFeatures);
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.features_bar) {
+          const parsed = JSON.parse(data.features_bar);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setFeatures(parsed);
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <div>
       {/* Hero Section */}
@@ -159,23 +185,26 @@ export default function HomePage() {
       <div className="border-b border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center gap-3"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500/10">
-                  <feature.icon className="h-5 w-5 text-gold-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{feature.title}</p>
-                  <p className="text-xs text-muted-foreground">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
+            {features.map((feature, index) => {
+              const Icon = iconMap[feature.icon] || Truck;
+              return (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500/10">
+                    <Icon className="h-5 w-5 text-gold-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{feature.title}</p>
+                    <p className="text-xs text-muted-foreground">{feature.description}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>

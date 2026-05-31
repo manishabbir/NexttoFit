@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Globe, Mail, Bell, Shield, Truck, Percent, CreditCard, DollarSign } from "lucide-react";
+import { Save, Globe, Mail, Bell, Shield, Truck, Percent, CreditCard, DollarSign, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface AnnouncementSettings {
@@ -10,6 +10,12 @@ interface AnnouncementSettings {
   text: string;
   highlightText: string;
   couponCode: string;
+}
+
+interface FeatureItem {
+  icon: string;
+  title: string;
+  description: string;
 }
 
 interface StoreSettings {
@@ -25,6 +31,7 @@ interface StoreSettings {
   enableEasyPaisa: boolean;
   enableBankTransfer: boolean;
   announcement: AnnouncementSettings;
+  features: FeatureItem[];
 }
 
 const defaultSettings: StoreSettings = {
@@ -45,6 +52,12 @@ const defaultSettings: StoreSettings = {
     highlightText: "on orders over ₹5,000",
     couponCode: "WELCOME20",
   },
+  features: [
+    { icon: "Truck", title: "Free Shipping", description: "On orders over Rs5,000" },
+    { icon: "Shield", title: "Secure Payment", description: "100% secure checkout" },
+    { icon: "RotateCcw", title: "Easy Returns", description: "30-day return policy" },
+    { icon: "Sparkles", title: "Premium Quality", description: "Handcrafted with care" },
+  ],
 };
 
 export default function AdminSettingsPage() {
@@ -84,6 +97,7 @@ export default function AdminSettingsPage() {
           settings: {
             store_settings: JSON.stringify(settings),
             announcement_bar: JSON.stringify(settings.announcement),
+            features_bar: JSON.stringify(settings.features),
           },
         }),
       });
@@ -108,6 +122,7 @@ export default function AdminSettingsPage() {
 
   const tabs = [
     { id: "general", label: "General", icon: Globe },
+    { id: "features", label: "Features Bar", icon: Sparkles },
     { id: "announcement", label: "Announcement Bar", icon: Bell },
     { id: "checkout", label: "Checkout", icon: CreditCard },
     { id: "shipping", label: "Shipping", icon: Truck },
@@ -179,6 +194,65 @@ export default function AdminSettingsPage() {
                 <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
               </button>
             </form>
+          </motion.div>
+        )}
+
+        {/* Features Bar Settings */}
+        {activeTab === "features" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            {settings.features.map((feature, index) => (
+              <div key={index} className="rounded-2xl border border-border bg-card p-6">
+                <h3 className="text-sm font-semibold mb-4">Feature #{index + 1}</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Icon Name</label>
+                    <input
+                      type="text"
+                      value={feature.icon}
+                      onChange={(e) => {
+                        const newFeatures = [...settings.features];
+                        newFeatures[index] = { ...feature, icon: e.target.value };
+                        update("features", newFeatures);
+                      }}
+                      placeholder="Truck, Shield, RotateCcw, Sparkles"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
+                    />
+                    <p className="text-xs text-muted-foreground mt-0.5">Options: Truck, Shield, RotateCcw, Sparkles</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Title</label>
+                    <input
+                      type="text"
+                      value={feature.title}
+                      onChange={(e) => {
+                        const newFeatures = [...settings.features];
+                        newFeatures[index] = { ...feature, title: e.target.value };
+                        update("features", newFeatures);
+                      }}
+                      placeholder="Free Shipping"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Description</label>
+                    <input
+                      type="text"
+                      value={feature.description}
+                      onChange={(e) => {
+                        const newFeatures = [...settings.features];
+                        newFeatures[index] = { ...feature, description: e.target.value };
+                        update("features", newFeatures);
+                      }}
+                      placeholder="On orders over Rs5,000"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button type="submit" onClick={handleSave} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
+              <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Features"}
+            </button>
           </motion.div>
         )}
 
