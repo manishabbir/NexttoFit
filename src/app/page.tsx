@@ -15,106 +15,6 @@ const defaultFeatures = [
   { icon: "Sparkles", title: "Premium Quality", description: "Handcrafted with care" },
 ];
 
-// Mock data for featured products
-const featuredProducts = [
-  {
-    id: "1",
-    name: "Premium Executive Suit",
-    slug: "premium-executive-suit",
-    price: 18500,
-    comparePrice: 25000,
-    images: [
-      { url: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&q=80", alt: "Premium Executive Suit Front", isPrimary: true },
-      { url: "https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=600&q=80", alt: "Premium Executive Suit Side", isPrimary: false },
-    ],
-    rating: 4.8,
-    reviewCount: 124,
-    isNewArrival: false,
-    isOnSale: true,
-    quantity: 15,
-  },
-  {
-    id: "2",
-    name: "Luxury Cashmere Blend Coat",
-    slug: "luxury-cashmere-blend-coat",
-    price: 32000,
-    comparePrice: 42000,
-    images: [
-      { url: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&q=80", alt: "Luxury Coat Front", isPrimary: true },
-      { url: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80", alt: "Luxury Coat Side", isPrimary: false },
-    ],
-    rating: 4.9,
-    reviewCount: 89,
-    isNewArrival: true,
-    isOnSale: true,
-    quantity: 8,
-  },
-  {
-    id: "3",
-    name: "Designer Kurta Shalwar",
-    slug: "designer-kurta-shalwar",
-    price: 12500,
-    comparePrice: null,
-    images: [
-      { url: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&q=80", alt: "Designer Kurta Front", isPrimary: true },
-      { url: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&q=80", alt: "Designer Kurta Detail", isPrimary: false },
-    ],
-    rating: 4.7,
-    reviewCount: 256,
-    isNewArrival: true,
-    isOnSale: false,
-    quantity: 25,
-  },
-  {
-    id: "4",
-    name: "Italian Leather Loafers",
-    slug: "italian-leather-loafers",
-    price: 15800,
-    comparePrice: 19500,
-    images: [
-      { url: "https://images.unsplash.com/photo-1531310197839-ccf546a09c7f?w=600&q=80", alt: "Italian Loafers Top", isPrimary: true },
-      { url: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=600&q=80", alt: "Italian Loafers Side", isPrimary: false },
-    ],
-    rating: 4.6,
-    reviewCount: 67,
-    isNewArrival: false,
-    isOnSale: true,
-    quantity: 12,
-  },
-  {
-    id: "5",
-    name: "Silk Evening Gown",
-    slug: "silk-evening-gown",
-    price: 28000,
-    comparePrice: null,
-    images: [
-      { url: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=600&q=80", alt: "Silk Gown Front", isPrimary: true },
-      { url: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&q=80", alt: "Silk Gown Back", isPrimary: false },
-    ],
-    rating: 4.9,
-    reviewCount: 43,
-    isNewArrival: true,
-    isOnSale: false,
-    quantity: 5,
-  },
-  {
-    id: "6",
-    name: "Handcrafted Leather Bag",
-    slug: "handcrafted-leather-bag",
-    price: 22500,
-    comparePrice: 28000,
-    images: [
-      { url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80", alt: "Leather Bag Front", isPrimary: true },
-      { url: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=600&q=80", alt: "Leather Bag Side", isPrimary: false },
-    ],
-    rating: 4.7,
-    reviewCount: 91,
-    isNewArrival: false,
-    isOnSale: true,
-    quantity: 10,
-  },
-];
-
 const categories = [
   {
     name: "Men's Collection",
@@ -161,8 +61,11 @@ const featuresData = [
 
 export default function HomePage() {
   const [features, setFeatures] = useState(defaultFeatures);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
+    // Fetch features bar
     fetch("/api/site-settings")
       .then((res) => res.json())
       .then((data) => {
@@ -174,6 +77,17 @@ export default function HomePage() {
         }
       })
       .catch(console.error);
+
+    // Fetch featured products from Supabase
+    fetch("/api/products?featured=true&limit=4")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setFeaturedProducts(data);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoadingProducts(false));
   }, []);
 
   return (
@@ -235,51 +149,54 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-            {featuredProducts.slice(0, 4).map((product, index) => (
-              <div key={product.id} className="group relative">
-                <Link href={`/product/${product.slug}`}>
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
-                    <img
-                      src={product.images[0].url}
-                      alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                      <span className="block text-sm font-medium text-white">
-                        Quick View
-                      </span>
+            {(loadingProducts ? [] : featuredProducts.length > 0 ? featuredProducts : Array(4).fill(null)).map((product: any, index: number) => {
+              if (!product) {
+                return (
+                  <div key={index} className="animate-pulse">
+                    <div className="aspect-[3/4] rounded-2xl bg-muted" />
+                    <div className="mt-4 space-y-2">
+                      <div className="h-4 w-3/4 rounded bg-muted" />
+                      <div className="h-3 w-1/2 rounded bg-muted" />
                     </div>
-                    {product.isNewArrival && (
-                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">
-                        New
-                      </span>
-                    )}
-                    {product.isOnSale && (
-                      <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">
-                        Sale
-                      </span>
-                    )}
                   </div>
-                </Link>
-                <div className="mt-4 space-y-1">
-                  <Link
-                    href={`/product/${product.slug}`}
-                    className="block text-sm font-medium transition-colors hover:text-gold-500"
-                  >
-                    {product.name}
+                );
+              }
+              const primaryImage = product.images?.find((img: any) => img.isPrimary) || product.images?.[0];
+              return (
+                <div key={product.id} className="group relative">
+                  <Link href={`/product/${product.slug}`}>
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
+                      <img
+                        src={primaryImage?.url || product.images?.[0]?.url}
+                        alt={product.name}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
+                        <span className="block text-sm font-medium text-white">Quick View</span>
+                      </div>
+                      {product.isNewArrival && (
+                        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">New</span>
+                      )}
+                      {product.isOnSale && (
+                        <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">Sale</span>
+                      )}
+                    </div>
                   </Link>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">₹{product.price.toLocaleString()}</span>
-                    {product.comparePrice && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        ₹{product.comparePrice.toLocaleString()}
-                      </span>
-                    )}
+                  <div className="mt-4 space-y-1">
+                    <Link href={`/product/${product.slug}`} className="block text-sm font-medium transition-colors hover:text-gold-500">
+                      {product.name}
+                    </Link>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">Rs.{Number(product.price).toLocaleString()}</span>
+                      {product.comparePrice && (
+                        <span className="text-xs text-muted-foreground line-through">Rs.{Number(product.comparePrice).toLocaleString()}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-8 text-center md:hidden">
@@ -417,46 +334,36 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-            {featuredProducts.slice(2, 6).map((product, index) => (
-              <div key={product.id} className="group relative">
-                <Link href={`/product/${product.slug}`}>
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
-                    <img
-                      src={product.images[0].url}
-                      alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {product.isNewArrival && (
-                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">
-                        New
-                      </span>
-                    )}
-                    {product.isOnSale && (
-                      <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">
-                        Sale
-                      </span>
-                    )}
-                  </div>
-                </Link>
-                <div className="mt-4 space-y-1">
-                  <Link
-                    href={`/product/${product.slug}`}
-                    className="block text-sm font-medium transition-colors hover:text-gold-500"
-                  >
-                    {product.name}
+            {featuredProducts.slice(2, 6).map((product: any) => {
+              const primaryImage = product.images?.find((img: any) => img.isPrimary) || product.images?.[0];
+              return (
+                <div key={product.id} className="group relative">
+                  <Link href={`/product/${product.slug}`}>
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
+                      <img
+                        src={primaryImage?.url || product.images?.[0]?.url}
+                        alt={product.name}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {product.isNewArrival && (
+                        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">New</span>
+                      )}
+                      {product.isOnSale && (
+                        <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">Sale</span>
+                      )}
+                    </div>
                   </Link>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">₹{product.price.toLocaleString()}</span>
-                    {product.comparePrice && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        ₹{product.comparePrice.toLocaleString()}
-                      </span>
-                    )}
+                  <div className="mt-4 space-y-1">
+                    <Link href={`/product/${product.slug}`} className="block text-sm font-medium transition-colors hover:text-gold-500">{product.name}</Link>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">Rs.{Number(product.price).toLocaleString()}</span>
+                      {product.comparePrice && <span className="text-xs text-muted-foreground line-through">Rs.{Number(product.comparePrice).toLocaleString()}</span>}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
