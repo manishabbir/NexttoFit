@@ -24,9 +24,11 @@ const defaultCategories = [
 export default function HomePage() {
   const [features, setFeatures] = useState(defaultFeatures);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [bestsellerProducts, setBestsellerProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState(defaultCategories);
   const [promoBanner, setPromoBanner] = useState({ enabled: true, tag: "Limited Edition", title: "Summer Collection", titleHighlight: "2024", description: "Embrace the season with our curated summer collection.", imageUrl: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1920&q=80", button1Text: "Explore Collection", button1Link: "/new-arrivals", button2Text: "View Sale", button2Link: "/sale" });
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingBestsellers, setLoadingBestsellers] = useState(true);
 
   useEffect(() => {
     fetch("/api/site-settings")
@@ -54,6 +56,12 @@ export default function HomePage() {
       .then((data) => { if (Array.isArray(data) && data.length > 0) setFeaturedProducts(data); })
       .catch(console.error)
       .finally(() => setLoadingProducts(false));
+
+    fetch("/api/products?bestsellers=true&limit=4")
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data) && data.length > 0) setBestsellerProducts(data); })
+      .catch(console.error)
+      .finally(() => setLoadingBestsellers(false));
   }, []);
 
   return (
@@ -301,24 +309,24 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-            {featuredProducts.slice(2, 6).map((product: any) => {
+            {(loadingBestsellers ? [] : bestsellerProducts.length > 0 ? bestsellerProducts : Array(4).fill(null)).map((product: any, index: number) => {
+              if (!product) {
+                return (
+                  <div key={index} className="animate-pulse">
+                    <div className="aspect-[3/4] rounded-2xl bg-muted" />
+                    <div className="mt-4 space-y-2"><div className="h-4 w-3/4 rounded bg-muted" /><div className="h-3 w-1/2 rounded bg-muted" /></div>
+                  </div>
+                );
+              }
               const primaryImage = product.images?.find((img: any) => img.isPrimary) || product.images?.[0];
               return (
                 <div key={product.id} className="group relative">
                   <Link href={`/product/${product.slug}`}>
                     <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
-                      <img
-                        src={primaryImage?.url || product.images?.[0]?.url}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                      <img src={primaryImage?.url || product.images?.[0]?.url} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {product.isNewArrival && (
-                        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">New</span>
-                      )}
-                      {product.isOnSale && (
-                        <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">Sale</span>
-                      )}
+                      {product.isNewArrival && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">New</span>}
+                      {product.isOnSale && <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">Sale</span>}
                     </div>
                   </Link>
                   <div className="mt-4 space-y-1">

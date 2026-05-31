@@ -10,6 +10,8 @@ export async function GET(request: NextRequest) {
   const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined;
 
   try {
+    const bestsellers = searchParams.get("bestsellers");
+
     const where: Prisma.ProductWhereInput = {
       isActive: true,
     };
@@ -17,6 +19,10 @@ export async function GET(request: NextRequest) {
     if (featured === "true") {
       where.isFeatured = true;
     }
+
+    const orderBy: Prisma.ProductOrderByWithRelationInput = bestsellers === "true"
+      ? { soldCount: "desc" }
+      : { createdAt: "desc" };
 
     const products = await prisma.product.findMany({
       where,
@@ -26,7 +32,7 @@ export async function GET(request: NextRequest) {
           take: 2,
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
       take: limit,
     });
 
