@@ -15,77 +15,36 @@ const defaultFeatures = [
   { icon: "Sparkles", title: "Premium Quality", description: "Handcrafted with care" },
 ];
 
-const categories = [
-  {
-    name: "Men's Collection",
-    href: "/men",
-    image: "https://images.unsplash.com/photo-1617137968427-8590be9b1ca9?w=800&q=80",
-    count: "248 Products",
-  },
-  {
-    name: "Women's Collection",
-    href: "/women",
-    image: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&q=80",
-    count: "312 Products",
-  },
-  {
-    name: "Accessories",
-    href: "/men?category=accessories",
-    image: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=800&q=80",
-    count: "156 Products",
-  },
-];
-
-const featuresData = [
-  {
-    icon: Truck,
-    title: "Free Shipping",
-    description: "On orders over ₹5,000",
-  },
-  {
-    icon: Shield,
-    title: "Secure Payment",
-    description: "100% secure checkout",
-  },
-  {
-    icon: RotateCcw,
-    title: "Easy Returns",
-    description: "30-day return policy",
-  },
-  {
-    icon: Sparkles,
-    title: "Premium Quality",
-    description: "Handcrafted with care",
-  },
+const defaultCategories = [
+  { name: "Men's Collection", href: "/men", image: "https://images.unsplash.com/photo-1617137968427-8590be9b1ca9?w=800&q=80", count: "248 Products" },
+  { name: "Women's Collection", href: "/women", image: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&q=80", count: "312 Products" },
+  { name: "Accessories", href: "/men?category=accessories", image: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=800&q=80", count: "156 Products" },
 ];
 
 export default function HomePage() {
   const [features, setFeatures] = useState(defaultFeatures);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState(defaultCategories);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
-    // Fetch features bar
     fetch("/api/site-settings")
       .then((res) => res.json())
       .then((data) => {
         if (data?.features_bar) {
           const parsed = JSON.parse(data.features_bar);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setFeatures(parsed);
-          }
+          if (Array.isArray(parsed) && parsed.length > 0) setFeatures(parsed);
+        }
+        if (data?.categories) {
+          const parsed = JSON.parse(data.categories);
+          if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
         }
       })
       .catch(console.error);
 
-    // Fetch featured products from Supabase
     fetch("/api/products?featured=true&limit=4")
       .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setFeaturedProducts(data);
-        }
-      })
+      .then((data) => { if (Array.isArray(data) && data.length > 0) setFeaturedProducts(data); })
       .catch(console.error)
       .finally(() => setLoadingProducts(false));
   }, []);
@@ -228,7 +187,7 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {categories.map((category, index) => (
+            {categories.map((category: any, index: number) => (
               <motion.div
                 key={category.name}
                 initial={{ opacity: 0, y: 30 }}

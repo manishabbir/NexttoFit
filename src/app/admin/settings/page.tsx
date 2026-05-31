@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Globe, Mail, Bell, Shield, Truck, Percent, CreditCard, DollarSign, Sparkles } from "lucide-react";
+import { Save, Globe, Mail, Bell, Shield, Truck, Percent, CreditCard, DollarSign, Sparkles, ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface AnnouncementSettings {
@@ -16,6 +16,13 @@ interface FeatureItem {
   icon: string;
   title: string;
   description: string;
+}
+
+interface CategoryItem {
+  name: string;
+  href: string;
+  image: string;
+  count: string;
 }
 
 interface StoreSettings {
@@ -32,6 +39,7 @@ interface StoreSettings {
   enableBankTransfer: boolean;
   announcement: AnnouncementSettings;
   features: FeatureItem[];
+  categories: CategoryItem[];
 }
 
 const defaultSettings: StoreSettings = {
@@ -57,6 +65,11 @@ const defaultSettings: StoreSettings = {
     { icon: "Shield", title: "Secure Payment", description: "100% secure checkout" },
     { icon: "RotateCcw", title: "Easy Returns", description: "30-day return policy" },
     { icon: "Sparkles", title: "Premium Quality", description: "Handcrafted with care" },
+  ],
+  categories: [
+    { name: "Men's Collection", href: "/men", image: "https://images.unsplash.com/photo-1617137968427-8590be9b1ca9?w=800&q=80", count: "248 Products" },
+    { name: "Women's Collection", href: "/women", image: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&q=80", count: "312 Products" },
+    { name: "Accessories", href: "/men?category=accessories", image: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=800&q=80", count: "156 Products" },
   ],
 };
 
@@ -98,6 +111,7 @@ export default function AdminSettingsPage() {
             store_settings: JSON.stringify(settings),
             announcement_bar: JSON.stringify(settings.announcement),
             features_bar: JSON.stringify(settings.features),
+            categories: JSON.stringify(settings.categories),
           },
         }),
       });
@@ -122,6 +136,7 @@ export default function AdminSettingsPage() {
 
   const tabs = [
     { id: "general", label: "General", icon: Globe },
+    { id: "categories", label: "Categories", icon: ImageIcon },
     { id: "features", label: "Features Bar", icon: Sparkles },
     { id: "announcement", label: "Announcement Bar", icon: Bell },
     { id: "checkout", label: "Checkout", icon: CreditCard },
@@ -194,6 +209,61 @@ export default function AdminSettingsPage() {
                 <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
               </button>
             </form>
+          </motion.div>
+        )}
+
+        {/* Categories Settings */}
+        {activeTab === "categories" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            {settings.categories.map((cat, index) => (
+              <div key={index} className="rounded-2xl border border-border bg-card p-6">
+                <h3 className="text-sm font-semibold mb-4">Category #{index + 1}</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Name</label>
+                    <input type="text" value={cat.name} onChange={(e) => {
+                      const newCats = [...settings.categories];
+                      newCats[index] = { ...cat, name: e.target.value };
+                      update("categories", newCats);
+                    }} placeholder="Men's Collection" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Link URL</label>
+                    <input type="text" value={cat.href} onChange={(e) => {
+                      const newCats = [...settings.categories];
+                      newCats[index] = { ...cat, href: e.target.value };
+                      update("categories", newCats);
+                    }} placeholder="/men" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none font-mono" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Image URL</label>
+                    <div className="flex gap-2">
+                      <input type="text" value={cat.image} onChange={(e) => {
+                        const newCats = [...settings.categories];
+                        newCats[index] = { ...cat, image: e.target.value };
+                        update("categories", newCats);
+                      }} placeholder="https://..." className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none font-mono" />
+                    </div>
+                    {cat.image && (
+                      <div className="mt-2 h-20 w-20 rounded-lg overflow-hidden bg-muted">
+                        <img src={cat.image} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Product Count Text</label>
+                    <input type="text" value={cat.count} onChange={(e) => {
+                      const newCats = [...settings.categories];
+                      newCats[index] = { ...cat, count: e.target.value };
+                      update("categories", newCats);
+                    }} placeholder="248 Products" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button type="submit" onClick={handleSave} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
+              <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Categories"}
+            </button>
           </motion.div>
         )}
 
