@@ -25,6 +25,7 @@ export default function HomePage() {
   const [features, setFeatures] = useState(defaultFeatures);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState(defaultCategories);
+  const [promoBanner, setPromoBanner] = useState({ enabled: true, tag: "Limited Edition", title: "Summer Collection", titleHighlight: "2024", description: "Embrace the season with our curated summer collection.", imageUrl: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1920&q=80", button1Text: "Explore Collection", button1Link: "/new-arrivals", button2Text: "View Sale", button2Link: "/sale" });
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
@@ -38,6 +39,12 @@ export default function HomePage() {
         if (data?.categories) {
           const parsed = JSON.parse(data.categories);
           if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
+        }
+        if (data?.promo_banner) {
+          try {
+            const parsed = JSON.parse(data.promo_banner);
+            if (parsed && typeof parsed === "object") setPromoBanner(parsed);
+          } catch {}
         }
       })
       .catch(console.error);
@@ -221,51 +228,52 @@ export default function HomePage() {
       </section>
 
       {/* Banner Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1920&q=80"
-            alt="Luxury fashion"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
-        </div>
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="max-w-lg"
-          >
-            <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
-              Limited Edition
-            </span>
-            <h2 className="mt-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">
-              Summer Collection
-              <br />
-              <span className="text-gradient-gold">2024</span>
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-white/70">
-              Embrace the season with our curated summer collection. Lightweight fabrics, 
-              vibrant colors, and impeccable designs for the style-conscious.
-            </p>
-            <div className="mt-8 flex gap-4">
-              <Link
-                href="/new-arrivals"
-                className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-8 py-4 text-sm font-semibold text-black transition-all hover:bg-gold-600"
-              >
-                Explore Collection <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/sale"
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-white/10"
-              >
-                View Sale
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      {promoBanner.enabled && (
+        <section className="relative py-20 md:py-32 overflow-hidden">
+          <div className="absolute inset-0">
+            <img
+              src={promoBanner.imageUrl}
+              alt="Promo banner"
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
+          </div>
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="max-w-lg"
+            >
+              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
+                {promoBanner.tag}
+              </span>
+              <h2 className="mt-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">
+                {promoBanner.title}
+                <br />
+                <span className="text-gradient-gold">{promoBanner.titleHighlight}</span>
+              </h2>
+              <p className="mt-6 text-lg leading-relaxed text-white/70">
+                {promoBanner.description}
+              </p>
+              <div className="mt-8 flex gap-4">
+                <Link
+                  href={promoBanner.button1Link}
+                  className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-8 py-4 text-sm font-semibold text-black transition-all hover:bg-gold-600"
+                >
+                  {promoBanner.button1Text} <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href={promoBanner.button2Link}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-white/10"
+                >
+                  {promoBanner.button2Text}
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* Bestsellers Grid */}
       <section className="py-16 md:py-24">

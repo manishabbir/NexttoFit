@@ -25,6 +25,19 @@ interface CategoryItem {
   count: string;
 }
 
+interface PromoBanner {
+  enabled: boolean;
+  tag: string;
+  title: string;
+  titleHighlight: string;
+  description: string;
+  imageUrl: string;
+  button1Text: string;
+  button1Link: string;
+  button2Text: string;
+  button2Link: string;
+}
+
 interface StoreSettings {
   storeName: string;
   email: string;
@@ -40,6 +53,7 @@ interface StoreSettings {
   announcement: AnnouncementSettings;
   features: FeatureItem[];
   categories: CategoryItem[];
+  promoBanner: PromoBanner;
 }
 
 const defaultSettings: StoreSettings = {
@@ -57,7 +71,7 @@ const defaultSettings: StoreSettings = {
   announcement: {
     enabled: true,
     text: "FREE SHIPPING ·",
-    highlightText: "on orders over ₹5,000",
+    highlightText: "on orders over Rs5,000",
     couponCode: "WELCOME20",
   },
   features: [
@@ -71,6 +85,18 @@ const defaultSettings: StoreSettings = {
     { name: "Women's Collection", href: "/women", image: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&q=80", count: "312 Products" },
     { name: "Accessories", href: "/men?category=accessories", image: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=800&q=80", count: "156 Products" },
   ],
+  promoBanner: {
+    enabled: true,
+    tag: "Limited Edition",
+    title: "Summer Collection",
+    titleHighlight: "2024",
+    description: "Embrace the season with our curated summer collection. Lightweight fabrics, vibrant colors, and impeccable designs for the style-conscious.",
+    imageUrl: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1920&q=80",
+    button1Text: "Explore Collection",
+    button1Link: "/new-arrivals",
+    button2Text: "View Sale",
+    button2Link: "/sale",
+  },
 };
 
 export default function AdminSettingsPage() {
@@ -80,9 +106,7 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
+  useEffect(() => { loadSettings(); }, []);
 
   const loadSettings = async () => {
     try {
@@ -112,10 +136,10 @@ export default function AdminSettingsPage() {
             announcement_bar: JSON.stringify(settings.announcement),
             features_bar: JSON.stringify(settings.features),
             categories: JSON.stringify(settings.categories),
+            promo_banner: JSON.stringify(settings.promoBanner),
           },
         }),
       });
-
       if (res.ok) {
         toast.success("Settings saved successfully!");
         setSaved(true);
@@ -136,6 +160,7 @@ export default function AdminSettingsPage() {
 
   const tabs = [
     { id: "general", label: "General", icon: Globe },
+    { id: "promo", label: "Promo Banner", icon: ImageIcon },
     { id: "categories", label: "Categories", icon: ImageIcon },
     { id: "features", label: "Features Bar", icon: Sparkles },
     { id: "announcement", label: "Announcement Bar", icon: Bell },
@@ -154,6 +179,8 @@ export default function AdminSettingsPage() {
     );
   }
 
+  const pb = settings.promoBanner;
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -161,314 +188,172 @@ export default function AdminSettingsPage() {
         <p className="text-sm text-muted-foreground">Manage store and checkout configuration</p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-6 rounded-xl bg-muted p-1 w-fit">
         {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeTab === tab.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            <tab.icon className="h-4 w-4" /> {tab.label}
           </button>
         ))}
       </div>
 
       <div className="space-y-6 max-w-2xl">
-        {/* General Settings */}
         {activeTab === "general" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Globe className="h-5 w-5 text-gold-500" /> Store Information</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Store Name</label>
-                  <input type="text" value={settings.storeName} onChange={(e) => update("storeName", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Currency</label>
-                  <select value={settings.currency} onChange={(e) => update("currency", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none">
-                    <option>PKR</option>
-                    <option>USD</option>
-                    <option>INR</option>
-                  </select>
-                </div>
+                <div><label className="text-sm font-medium mb-1.5 block">Store Name</label><input type="text" value={settings.storeName} onChange={(e) => update("storeName", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+                <div><label className="text-sm font-medium mb-1.5 block">Currency</label><select value={settings.currency} onChange={(e) => update("currency", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none"><option>PKR</option><option>USD</option><option>INR</option></select></div>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Store Email</label>
-                <input type="email" value={settings.email} onChange={(e) => update("email", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Store Phone</label>
-                <input type="tel" value={settings.phone} onChange={(e) => update("phone", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-              </div>
-              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-                <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
-              </button>
+              <div><label className="text-sm font-medium mb-1.5 block">Store Email</label><input type="email" value={settings.email} onChange={(e) => update("email", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+              <div><label className="text-sm font-medium mb-1.5 block">Store Phone</label><input type="tel" value={settings.phone} onChange={(e) => update("phone", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}</button>
             </form>
-          </motion.div>
+          </div>
         )}
 
-        {/* Categories Settings */}
+        {activeTab === "promo" && (
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><ImageIcon className="h-5 w-5 text-gold-500" /> Promo Banner Section</h2>
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="flex items-center justify-between rounded-xl border border-border p-4">
+                <div><p className="text-sm font-medium">Show Promo Banner</p><p className="text-xs text-muted-foreground">Toggle the full-width banner on/off</p></div>
+                <button type="button" onClick={() => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, enabled: !s.promoBanner.enabled } }))}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${pb.enabled ? "bg-gold-500" : "bg-muted"}`}>
+                  <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${pb.enabled ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
+              </div>
+              <div><label className="text-sm font-medium mb-1.5 block">Tag / Badge Text</label><input type="text" value={pb.tag} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, tag: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className="text-sm font-medium mb-1.5 block">Title</label><input type="text" value={pb.title} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, title: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+                <div><label className="text-sm font-medium mb-1.5 block">Title Highlight (gold)</label><input type="text" value={pb.titleHighlight} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, titleHighlight: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+              </div>
+              <div><label className="text-sm font-medium mb-1.5 block">Description</label><textarea value={pb.description} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, description: e.target.value } }))} rows={3} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none resize-none" /></div>
+              <div><label className="text-sm font-medium mb-1.5 block">Background Image URL</label>
+                <div className="flex gap-2">
+                  <input type="text" value={pb.imageUrl} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, imageUrl: e.target.value } }))} className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none font-mono" />
+                </div>
+                {pb.imageUrl && <div className="mt-2 h-24 rounded-xl overflow-hidden bg-muted"><img src={pb.imageUrl} alt="" className="h-full w-full object-cover" /></div>}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className="text-sm font-medium mb-1.5 block">Button 1 Text</label><input type="text" value={pb.button1Text} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, button1Text: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+                <div><label className="text-sm font-medium mb-1.5 block">Button 1 Link</label><input type="text" value={pb.button1Link} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, button1Link: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none font-mono" /></div>
+                <div><label className="text-sm font-medium mb-1.5 block">Button 2 Text</label><input type="text" value={pb.button2Text} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, button2Text: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+                <div><label className="text-sm font-medium mb-1.5 block">Button 2 Link</label><input type="text" value={pb.button2Link} onChange={(e) => setSettings((s) => ({ ...s, promoBanner: { ...s.promoBanner, button2Link: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none font-mono" /></div>
+              </div>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}</button>
+            </form>
+          </div>
+        )}
+
         {activeTab === "categories" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            {settings.categories.map((cat, index) => (
-              <div key={index} className="rounded-2xl border border-border bg-card p-6">
-                <h3 className="text-sm font-semibold mb-4">Category #{index + 1}</h3>
+          <div className="space-y-4">
+            {settings.categories.map((cat, i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card p-6">
+                <h3 className="text-sm font-semibold mb-4">Category #{i + 1}</h3>
                 <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Name</label>
-                    <input type="text" value={cat.name} onChange={(e) => {
-                      const newCats = [...settings.categories];
-                      newCats[index] = { ...cat, name: e.target.value };
-                      update("categories", newCats);
-                    }} placeholder="Men's Collection" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" />
+                  <div><label className="text-xs font-medium mb-1 block">Name</label><input type="text" value={cat.name} onChange={(e) => { const c = [...settings.categories]; c[i] = { ...cat, name: e.target.value }; update("categories", c); }} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" /></div>
+                  <div><label className="text-xs font-medium mb-1 block">Link URL</label><input type="text" value={cat.href} onChange={(e) => { const c = [...settings.categories]; c[i] = { ...cat, href: e.target.value }; update("categories", c); }} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono focus:border-gold-500 focus:outline-none" /></div>
+                  <div><label className="text-xs font-medium mb-1 block">Image URL</label><input type="text" value={cat.image} onChange={(e) => { const c = [...settings.categories]; c[i] = { ...cat, image: e.target.value }; update("categories", c); }} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono focus:border-gold-500 focus:outline-none" />
+                    {cat.image && <div className="mt-2 h-20 w-20 rounded-lg overflow-hidden bg-muted"><img src={cat.image} alt="" className="h-full w-full object-cover" /></div>}
                   </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Link URL</label>
-                    <input type="text" value={cat.href} onChange={(e) => {
-                      const newCats = [...settings.categories];
-                      newCats[index] = { ...cat, href: e.target.value };
-                      update("categories", newCats);
-                    }} placeholder="/men" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none font-mono" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Image URL</label>
-                    <div className="flex gap-2">
-                      <input type="text" value={cat.image} onChange={(e) => {
-                        const newCats = [...settings.categories];
-                        newCats[index] = { ...cat, image: e.target.value };
-                        update("categories", newCats);
-                      }} placeholder="https://..." className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none font-mono" />
-                    </div>
-                    {cat.image && (
-                      <div className="mt-2 h-20 w-20 rounded-lg overflow-hidden bg-muted">
-                        <img src={cat.image} alt="" className="h-full w-full object-cover" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Product Count Text</label>
-                    <input type="text" value={cat.count} onChange={(e) => {
-                      const newCats = [...settings.categories];
-                      newCats[index] = { ...cat, count: e.target.value };
-                      update("categories", newCats);
-                    }} placeholder="248 Products" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" />
-                  </div>
+                  <div><label className="text-xs font-medium mb-1 block">Product Count Text</label><input type="text" value={cat.count} onChange={(e) => { const c = [...settings.categories]; c[i] = { ...cat, count: e.target.value }; update("categories", c); }} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" /></div>
                 </div>
               </div>
             ))}
-            <button type="submit" onClick={handleSave} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-              <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Categories"}
-            </button>
-          </motion.div>
+            <button type="submit" onClick={handleSave} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> Save Categories</button>
+          </div>
         )}
 
-        {/* Features Bar Settings */}
         {activeTab === "features" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            {settings.features.map((feature, index) => (
-              <div key={index} className="rounded-2xl border border-border bg-card p-6">
-                <h3 className="text-sm font-semibold mb-4">Feature #{index + 1}</h3>
+          <div className="space-y-4">
+            {settings.features.map((f, i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card p-6">
+                <h3 className="text-sm font-semibold mb-4">Feature #{i + 1}</h3>
                 <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Icon Name</label>
-                    <input
-                      type="text"
-                      value={feature.icon}
-                      onChange={(e) => {
-                        const newFeatures = [...settings.features];
-                        newFeatures[index] = { ...feature, icon: e.target.value };
-                        update("features", newFeatures);
-                      }}
-                      placeholder="Truck, Shield, RotateCcw, Sparkles"
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
-                    />
-                    <p className="text-xs text-muted-foreground mt-0.5">Options: Truck, Shield, RotateCcw, Sparkles</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Title</label>
-                    <input
-                      type="text"
-                      value={feature.title}
-                      onChange={(e) => {
-                        const newFeatures = [...settings.features];
-                        newFeatures[index] = { ...feature, title: e.target.value };
-                        update("features", newFeatures);
-                      }}
-                      placeholder="Free Shipping"
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium mb-1 block">Description</label>
-                    <input
-                      type="text"
-                      value={feature.description}
-                      onChange={(e) => {
-                        const newFeatures = [...settings.features];
-                        newFeatures[index] = { ...feature, description: e.target.value };
-                        update("features", newFeatures);
-                      }}
-                      placeholder="On orders over Rs5,000"
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none"
-                    />
-                  </div>
+                  <div><label className="text-xs font-medium mb-1 block">Icon Name</label><input type="text" value={f.icon} onChange={(e) => { const a = [...settings.features]; a[i] = { ...f, icon: e.target.value }; update("features", a); }} placeholder="Truck, Shield, RotateCcw, Sparkles" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" /></div>
+                  <div><label className="text-xs font-medium mb-1 block">Title</label><input type="text" value={f.title} onChange={(e) => { const a = [...settings.features]; a[i] = { ...f, title: e.target.value }; update("features", a); }} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" /></div>
+                  <div><label className="text-xs font-medium mb-1 block">Description</label><input type="text" value={f.description} onChange={(e) => { const a = [...settings.features]; a[i] = { ...f, description: e.target.value }; update("features", a); }} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-gold-500 focus:outline-none" /></div>
                 </div>
               </div>
             ))}
-            <button type="submit" onClick={handleSave} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-              <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Features"}
-            </button>
-          </motion.div>
+            <button type="submit" onClick={handleSave} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> Save Features</button>
+          </div>
         )}
 
-        {/* Announcement Bar Settings */}
         {activeTab === "announcement" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Bell className="h-5 w-5 text-gold-500" /> Announcement Bar</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="flex items-center justify-between rounded-xl border border-border p-4">
-                <div>
-                  <p className="text-sm font-medium">Show Announcement Bar</p>
-                  <p className="text-xs text-muted-foreground">Toggle the top announcement banner on/off</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, enabled: !prev.announcement.enabled } }))}
-                  className={`relative h-6 w-11 rounded-full transition-colors ${settings.announcement.enabled ? "bg-gold-500" : "bg-muted"}`}
-                >
+                <div><p className="text-sm font-medium">Show Announcement Bar</p><p className="text-xs text-muted-foreground">Toggle the top banner on/off</p></div>
+                <button type="button" onClick={() => setSettings((s) => ({ ...s, announcement: { ...s.announcement, enabled: !s.announcement.enabled } }))}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${settings.announcement.enabled ? "bg-gold-500" : "bg-muted"}`}>
                   <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${settings.announcement.enabled ? "translate-x-5" : "translate-x-0"}`} />
                 </button>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Announcement Text</label>
-                <input type="text" value={settings.announcement.text} onChange={(e) => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, text: e.target.value } }))} placeholder="FREE SHIPPING ·" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Highlight Text</label>
-                <input type="text" value={settings.announcement.highlightText} onChange={(e) => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, highlightText: e.target.value } }))} placeholder="on orders over ₹5,000" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Coupon Code</label>
-                <input type="text" value={settings.announcement.couponCode} onChange={(e) => setSettings((prev) => ({ ...prev, announcement: { ...prev.announcement, couponCode: e.target.value } }))} placeholder="WELCOME20" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-              </div>
-              <div className="rounded-xl bg-muted/50 p-4">
-                <h3 className="text-sm font-medium mb-2">Preview</h3>
-                <div className="rounded-lg bg-gradient-to-r from-luxury-950 via-gold-800 to-luxury-950 p-3 text-center text-xs text-white uppercase tracking-wider">
-                  {settings.announcement.text} <span className="text-gold-300">{settings.announcement.highlightText}</span>
-                  {settings.announcement.couponCode ? ` · Use code: ${settings.announcement.couponCode}` : ""}
-                </div>
-              </div>
-              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-                <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
-              </button>
+              <div><label className="text-sm font-medium mb-1.5 block">Announcement Text</label><input type="text" value={settings.announcement.text} onChange={(e) => setSettings((s) => ({ ...s, announcement: { ...s.announcement, text: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+              <div><label className="text-sm font-medium mb-1.5 block">Highlight Text</label><input type="text" value={settings.announcement.highlightText} onChange={(e) => setSettings((s) => ({ ...s, announcement: { ...s.announcement, highlightText: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+              <div><label className="text-sm font-medium mb-1.5 block">Coupon Code</label><input type="text" value={settings.announcement.couponCode} onChange={(e) => setSettings((s) => ({ ...s, announcement: { ...s.announcement, couponCode: e.target.value } }))} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" /></div>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> Save Settings</button>
             </form>
-          </motion.div>
+          </div>
         )}
 
-        {/* Checkout Settings */}
         {activeTab === "checkout" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          <div className="space-y-6">
             <div className="rounded-2xl border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Percent className="h-5 w-5 text-gold-500" /> Tax & Pricing</h2>
+              <h2 className="text-lg font-semibold mb-4"><Percent className="h-5 w-5 text-gold-500 inline-block mr-2" /> Tax & Pricing</h2>
               <form onSubmit={handleSave} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Tax Rate (%)</label>
-                    <div className="relative">
-                      <input type="number" value={settings.taxRate} onChange={(e) => update("taxRate", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-8 text-sm focus:border-gold-500 focus:outline-none" />
-                      <Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">Applied to subtotal at checkout</p>
+                  <div><label className="text-sm font-medium mb-1.5 block">Tax Rate (%)</label>
+                    <div className="relative"><input type="number" value={settings.taxRate} onChange={(e) => update("taxRate", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-8 text-sm focus:border-gold-500 focus:outline-none" /><Percent className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Currency</label>
-                    <select value={settings.currency} onChange={(e) => update("currency", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none">
-                      <option>PKR - Pakistani Rupee</option>
-                      <option>USD - US Dollar</option>
-                      <option>INR - Indian Rupee</option>
-                    </select>
-                  </div>
+                  <div><label className="text-sm font-medium mb-1.5 block">Currency</label><select value={settings.currency} onChange={(e) => update("currency", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none"><option>PKR - Pakistani Rupee</option><option>USD - US Dollar</option><option>INR - Indian Rupee</option></select></div>
                 </div>
-                <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-                  <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
-                </button>
+                <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> Save Settings</button>
               </form>
             </div>
-
             <div className="rounded-2xl border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><CreditCard className="h-5 w-5 text-gold-500" /> Payment Methods</h2>
+              <h2 className="text-lg font-semibold mb-4"><CreditCard className="h-5 w-5 text-gold-500 inline-block mr-2" /> Payment Methods</h2>
               <div className="space-y-3">
                 {[
-                  { id: "enableCOD" as const, label: "Cash on Delivery", desc: "Pay when you receive", state: settings.enableCOD },
-                  { id: "enableCard" as const, label: "Credit/Debit Card", desc: "Visa, Mastercard", state: settings.enableCard },
-                  { id: "enableEasyPaisa" as const, label: "EasyPaisa / JazzCash", desc: "Mobile wallet", state: settings.enableEasyPaisa },
-                  { id: "enableBankTransfer" as const, label: "Bank Transfer", desc: "Direct bank deposit", state: settings.enableBankTransfer },
-                ].map((method) => (
-                  <label key={method.id} className="flex items-center justify-between rounded-xl border border-border p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div>
-                      <p className="text-sm font-medium">{method.label}</p>
-                      <p className="text-xs text-muted-foreground">{method.desc}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => update(method.id, !method.state)}
-                      className={`relative h-6 w-11 rounded-full transition-colors ${method.state ? "bg-gold-500" : "bg-muted"}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${method.state ? "translate-x-5" : "translate-x-0"}`} />
+                  { id: "enableCOD" as const, label: "Cash on Delivery", state: settings.enableCOD },
+                  { id: "enableCard" as const, label: "Credit/Debit Card", state: settings.enableCard },
+                  { id: "enableEasyPaisa" as const, label: "EasyPaisa / JazzCash", state: settings.enableEasyPaisa },
+                  { id: "enableBankTransfer" as const, label: "Bank Transfer", state: settings.enableBankTransfer },
+                ].map((m) => (
+                  <label key={m.id} className="flex items-center justify-between rounded-xl border border-border p-4 cursor-pointer hover:bg-muted/50">
+                    <p className="text-sm font-medium">{m.label}</p>
+                    <button type="button" onClick={() => update(m.id, !m.state)} className={`relative h-6 w-11 rounded-full transition-colors ${m.state ? "bg-gold-500" : "bg-muted"}`}>
+                      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${m.state ? "translate-x-5" : "translate-x-0"}`} />
                     </button>
                   </label>
                 ))}
               </div>
-              <button onClick={handleSave} className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-                <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
-              </button>
+              <button onClick={handleSave} className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> Save Settings</button>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        {/* Shipping Settings */}
         {activeTab === "shipping" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Truck className="h-5 w-5 text-gold-500" /> Shipping Configuration</h2>
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold mb-4"><Truck className="h-5 w-5 text-gold-500 inline-block mr-2" /> Shipping Configuration</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Standard Shipping Cost</label>
-                  <div className="relative">
-                    <input type="number" value={settings.shippingCost} onChange={(e) => update("shippingCost", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pl-8 text-sm focus:border-gold-500 focus:outline-none" />
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
+                <div><label className="text-sm font-medium mb-1.5 block">Standard Shipping Cost</label>
+                  <div className="relative"><input type="number" value={settings.shippingCost} onChange={(e) => update("shippingCost", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pl-8 text-sm focus:border-gold-500 focus:outline-none" /><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Free Shipping Minimum</label>
-                  <div className="relative">
-                    <input type="number" value={settings.freeShippingThreshold} onChange={(e) => update("freeShippingThreshold", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pl-8 text-sm focus:border-gold-500 focus:outline-none" />
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Orders above this amount get free shipping</p>
+                <div><label className="text-sm font-medium mb-1.5 block">Free Shipping Minimum</label>
+                  <div className="relative"><input type="number" value={settings.freeShippingThreshold} onChange={(e) => update("freeShippingThreshold", e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pl-8 text-sm focus:border-gold-500 focus:outline-none" /><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
                 </div>
               </div>
-              <div className="rounded-xl bg-muted/50 p-4">
-                <h3 className="text-sm font-medium mb-2">Shipping Preview</h3>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <p>• Orders under {settings.currency} {settings.freeShippingThreshold}: {settings.currency} {settings.shippingCost} shipping</p>
-                  <p>• Orders over {settings.currency} {settings.freeShippingThreshold}: <span className="text-green-500">Free shipping</span></p>
-                  <p>• Tax rate: {settings.taxRate}% on subtotal</p>
-                </div>
-              </div>
-              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-                <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Settings"}
-              </button>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600"><Save className="h-4 w-4" /> Save Settings</button>
             </form>
-          </motion.div>
+          </div>
         )}
 
-        {/* System Status */}
         <div className="grid gap-4 sm:grid-cols-3">
           {[
             { icon: Mail, label: "SMTP Status", value: "Connected", color: "text-green-500" },
@@ -477,10 +362,7 @@ export default function AdminSettingsPage() {
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
               <item.icon className="h-5 w-5 text-gold-500" />
-              <div>
-                <p className="text-xs text-muted-foreground">{item.label}</p>
-                <p className={`text-sm font-medium ${item.color}`}>{item.value}</p>
-              </div>
+              <div><p className="text-xs text-muted-foreground">{item.label}</p><p className={`text-sm font-medium ${item.color}`}>{item.value}</p></div>
             </div>
           ))}
         </div>
