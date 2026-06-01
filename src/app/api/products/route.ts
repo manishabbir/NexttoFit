@@ -12,6 +12,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+
+    // Find or create category
+    let categoryConnect: any = undefined;
+    if (body.categoryName) {
+      let cat = await prisma.category.findFirst({ where: { name: body.categoryName } });
+      if (!cat) {
+        cat = await prisma.category.create({
+          data: { name: body.categoryName, slug: body.categoryName.toLowerCase().replace(/ /g, "-") },
+        });
+      }
+      categoryConnect = { categories: { create: { categoryId: cat.id } } };
+    }
+
     const product = await prisma.product.create({
       data: {
         name: body.name,
@@ -27,6 +40,7 @@ export async function POST(request: NextRequest) {
         isFeatured: body.isFeatured ?? false,
         isNewArrival: body.isNewArrival ?? false,
         isOnSale: body.isOnSale ?? false,
+        ...(categoryConnect || {}),
       },
     });
 
@@ -47,11 +61,29 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const featured = searchParams.get("featured");
   const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined;
+  const bestsellers = searchParams.get("bestsellers");
+  const onsale = searchParams.get("onsale");
+  const newarrivals = searchParams.get("newarrivals");
+  const category = searchParams.get("category");
+  const all = searchParams.get("all");
 
   try {
-    const bestsellers = searchParams.get("bestsellers");
-    const where: Prisma.ProductWhereInput = { isActive: true };
+    const where: Prisma.ProductWhereInput = {};
+    
+    // By default only return active products, unless all=true
+    if (all !== "true") {
+      where.isActive = true;
+    }
+
     if (featured === "true") where.isFeatured = true;
+    if (onsale === "true") where.isOnSale = true;
+    if (newarrivals === "true") where.isNewArrival = true;
+
+    if (category) {
+      where.categories = {
+        some: { category: { slug: category } },
+      };
+    }
 
     const orderBy: Prisma.ProductOrderByWithRelationInput = bestsellers === "true"
       ? { soldCount: "desc" }
@@ -59,7 +91,10 @@ export async function GET(request: NextRequest) {
 
     const products = await prisma.product.findMany({
       where,
-      include: { images: { orderBy: { order: "asc" }, take: 2 } },
+      include: { 
+        images: { orderBy: { order: "asc" }, take: 2 },
+        categories: { include: { category: true } },
+      },
       orderBy,
       take: limit,
     });
@@ -126,9 +161,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { id, ...updates } = body;
 
-    if (!id) {
-      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
-    }
+    if (!id) return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
 
     const product = await prisma.product.update({
       where: { id },
