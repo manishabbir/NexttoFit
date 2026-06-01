@@ -24,11 +24,13 @@ import {
   Gift,
   Layers,
   ArrowDownToLine,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sidebarItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Homepage Editor", href: "/admin/home", icon: Home },
   { name: "Products", href: "/admin/products", icon: Package },
   { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { name: "Users", href: "/admin/users", icon: Users },
