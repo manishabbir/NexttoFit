@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Plus, Search, Edit, Trash2, Eye, Star, StarOff, Save, X, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface ProductImage {
   url: string;
@@ -210,9 +211,12 @@ export default function AdminProductsPage() {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Image URL</label>
-                <input type="text" value={editing.imageUrl} onChange={(e) => setEditing({ ...editing, imageUrl: e.target.value })} placeholder="https://images.unsplash.com/..." className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-mono focus:border-gold-500 focus:outline-none" />
-                {editing.imageUrl && <div className="mt-2 h-24 w-24 rounded-xl overflow-hidden bg-muted"><img src={editing.imageUrl} alt="" className="h-full w-full object-cover" /></div>}
+                <label className="text-sm font-medium mb-1.5 block">Product Image</label>
+                <ImageUploader
+                  imageUrl={editing.imageUrl}
+                  onImageChange={(url) => setEditing({ ...editing, imageUrl: url })}
+                  aspectRatio="4/3"
+                />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <ToggleSwitch label="Active" value={editing.isActive} onChange={(v) => setEditing({ ...editing, isActive: v })} />
