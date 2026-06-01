@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
 import sharp from "sharp";
 
 export async function POST(request: NextRequest) {
@@ -20,89 +17,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Only image files allowed (JPG, PNG, WebP)" }, { status: 400 });
+      return NextResponse.json({ error: "Only image files allowed" }, { status: 400 });
     }
 
-    // No file size limit - Sharp will optimize regardless of size
-    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const inputBuffer = Buffer.from(bytes);
 
-    // Optimize with Sharp:
-    // 1. Resize to max 1600px width (preserve aspect ratio)
-    // 2. Convert to AVIF quality 80, fallback to WebP
-    // 3. Strip EXIF/metadata
+    // Optimize with Sharp
     let outputBuffer: Buffer;
-    let ext: string;
-    let format: string;
+    let mimeType = "image/jpeg";
+    let format = "JPEG";
 
     try {
-      // Try AVIF first (best compression/quality)
       outputBuffer = await sharp(inputBuffer)
-        .resize(1600, null, { 
-          withoutEnlargement: true,
-          fit: "inside",
-        })
+        .resize(1600, null, { withoutEnlargement: true, fit: "inside" })
         .avif({ quality: 80 })
-        .withMetadata({ exif: undefined, icc: undefined })
         .toBuffer();
-      ext = "avif";
+      mimeType = "image/avif";
       format = "AVIF";
     } catch {
-      // Fallback to WebP if AVIF fails
       try {
         outputBuffer = await sharp(inputBuffer)
-          .resize(1600, null, { 
-            withoutEnlargement: true,
-            fit: "inside",
-          })
+          .resize(1600, null, { withoutEnlargement: true, fit: "inside" })
           .webp({ quality: 80 })
-          .withMetadata({ exif: undefined, icc: undefined })
           .toBuffer();
-        ext = "webp";
+        mimeType = "image/webp";
         format = "WebP";
       } catch {
-        // Final fallback to JPEG
         outputBuffer = await sharp(inputBuffer)
-          .resize(1600, null, { 
-            withoutEnlargement: true,
-            fit: "inside",
-          })
+          .resize(1600, null, { withoutEnlargement: true, fit: "inside" })
           .jpeg({ quality: 80 })
-          .withMetadata({ exif: undefined, icc: undefined })
           .toBuffer();
-        ext = "jpg";
+        mimeType = "image/jpeg";
         format = "JPEG";
       }
     }
 
-    // Calculate compression ratio
     const originalSizeKB = (file.size / 1024).toFixed(1);
     const optimizedSizeKB = (outputBuffer.length / 1024).toFixed(1);
     const savings = ((1 - outputBuffer.length / file.size) * 100).toFixed(1);
 
-    // Create unique filename
-    const filename = `${crypto.randomUUID()}.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
-    const filepath = path.join(uploadDir, filename);
-    await writeFile(filepath, outputBuffer);
-
-    // Return the URL and optimization info
-    const url = `/uploads/${filename}`;
+    // Convert to base64 data URL - works everywhere (local & Vercel serverless)
+    const base64 = outputBuffer.toString("base64");
+    const url = `data:${mimeType};base64,${base64}`;
 
     return NextResponse.json({
       url,
-      filename,
       format,
       originalSize: `${originalSizeKB} KB`,
       optimizedSize: `${optimizedSizeKB} KB`,
       savings: `${savings}%`,
     });
   } catch (error) {
-    console.error("Error uploading file:", error);
+    console.error("Upload error:", error);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
