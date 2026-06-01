@@ -21,12 +21,21 @@ const defaultCategories = [
   { name: "Accessories", href: "/men?category=accessories", image: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=800&q=80", count: "156 Products" },
 ];
 
+const defaultSocialImages = [
+  "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&q=80",
+  "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80",
+  "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=400&q=80",
+  "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=400&q=80",
+];
+
 export default function HomePage() {
   const [features, setFeatures] = useState(defaultFeatures);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [bestsellerProducts, setBestsellerProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState(defaultCategories);
   const [promoBanner, setPromoBanner] = useState({ enabled: true, tag: "Limited Edition", title: "Summer Collection", titleHighlight: "2024", description: "Embrace the season with our curated summer collection.", imageUrl: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1920&q=80", button1Text: "Explore Collection", button1Link: "/new-arrivals", button2Text: "View Sale", button2Link: "/sale" });
+  const [socialSection, setSocialSection] = useState<any>({ enabled: true, title: "Follow Us", handle: "@nextfitt", subtitle: "Tag us in your looks for a chance to be featured" });
+  const [socialImages, setSocialImages] = useState(defaultSocialImages);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingBestsellers, setLoadingBestsellers] = useState(true);
 
@@ -46,6 +55,17 @@ export default function HomePage() {
           try {
             const parsed = JSON.parse(data.promo_banner);
             if (parsed && typeof parsed === "object") setPromoBanner(parsed);
+          } catch {}
+        }
+        if (data?.social_section) {
+          try {
+            const parsed = JSON.parse(data.social_section);
+            if (parsed && typeof parsed === "object") {
+              setSocialSection(parsed);
+              if (parsed.images && Array.isArray(parsed.images) && parsed.images.length > 0) {
+                setSocialImages(parsed.images.map((img: any) => img.url));
+              }
+            }
           } catch {}
         }
       })
@@ -344,53 +364,50 @@ export default function HomePage() {
       </section>
 
       {/* Instagram / Social Proof */}
-      <section className="py-16 md:py-24 bg-card">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10"
-          >
-            <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
-              Follow Us
-            </span>
-            <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
-              @nextfitt
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Tag us in your looks for a chance to be featured
-            </p>
-          </motion.div>
+      {socialSection.enabled && (
+        <section className="py-16 md:py-24 bg-card">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-10"
+            >
+              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
+                {socialSection.title}
+              </span>
+              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
+                {socialSection.handle}
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                {socialSection.subtitle}
+              </p>
+            </motion.div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-            {[
-              "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&q=80",
-              "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80",
-              "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=400&q=80",
-              "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=400&q=80",
-            ].map((img, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="relative aspect-square overflow-hidden rounded-2xl group cursor-pointer"
-              >
-                <img
-                  src={img}
-                  alt="Social media post"
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-white font-medium text-sm">Shop the Look</span>
-                </div>
-              </motion.div>
-            ))}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+              {socialImages.map((img, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="relative aspect-square overflow-hidden rounded-2xl group cursor-pointer"
+                >
+                  <img
+                    src={img}
+                    alt="Social media post"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-white font-medium text-sm">Shop the Look</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
