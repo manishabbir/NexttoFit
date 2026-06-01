@@ -17,44 +17,8 @@ interface Banner {
   isActive: boolean;
 }
 
-const defaultBanners: Banner[] = [
-  {
-    id: "default-1",
-    title: "ELEVATE YOUR",
-    subtitle: "EVERYDAY STYLE",
-    description: "Premium craftsmanship meets modern sophistication. Discover our latest collection designed for the discerning gentleman.",
-    linkText: "Shop Men's Collection",
-    linkUrl: "/men",
-    imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80",
-    order: 1,
-    isActive: true,
-  },
-  {
-    id: "default-2",
-    title: "REDEFINING",
-    subtitle: "FEMININE ELEGANCE",
-    description: "From timeless classics to contemporary designs, explore fashion that celebrates your unique style.",
-    linkText: "Shop Women's Collection",
-    linkUrl: "/women",
-    imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1920&q=80",
-    order: 2,
-    isActive: true,
-  },
-  {
-    id: "default-3",
-    title: "NEW SEASON",
-    subtitle: "NOW ARRIVING",
-    description: "Be the first to explore our latest drops. Fresh styles, bold designs, and unmatched quality await.",
-    linkText: "View New Arrivals",
-    linkUrl: "/new-arrivals",
-    imageUrl: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1920&q=80",
-    order: 3,
-    isActive: true,
-  },
-];
-
 export function HeroSection() {
-  const [slides, setSlides] = useState<Banner[]>(defaultBanners);
+  const [slides, setSlides] = useState<Banner[] | null>(null);
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
 
@@ -70,14 +34,26 @@ export function HeroSection() {
         const activeBanners = data
           .filter((b: Banner) => b.isActive)
           .sort((a: Banner, b: Banner) => a.order - b.order);
-        if (activeBanners.length > 0) {
-          setSlides(activeBanners);
-        }
+        setSlides(activeBanners.length > 0 ? activeBanners : null);
+      } else {
+        setSlides(null); // No banners found, will show defaults on server
       }
     } catch (error) {
       console.error("Error fetching banners:", error);
+      setSlides(null); // On error, let the server render defaults
     }
   };
+
+  // Show loading skeleton while fetching - no default flash
+  if (slides === null) {
+    return (
+      <section className="relative h-[80vh] min-h-[600px] max-h-[900px] overflow-hidden bg-gradient-to-r from-luxury-950 via-luxury-900 to-luxury-950">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500" />
+        </div>
+      </section>
+    );
+  }
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -104,8 +80,6 @@ export function HeroSection() {
   };
 
   const slide = slides[current];
-
-  if (!slide) return null;
 
   const variants = {
     enter: (direction: number) => ({
