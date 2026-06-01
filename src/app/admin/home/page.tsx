@@ -93,6 +93,11 @@ export default function AdminHomeEditorPage() {
   };
 
   const openEditor = (sectionId: string) => {
+    // For complex sections that need their own admin pages, redirect
+    if (sectionId === "hero") { window.location.href = "/admin/banners"; return; }
+    if (sectionId === "featured") { window.location.href = "/admin/products"; return; }
+    if (sectionId === "bestsellers") { window.location.href = "/admin/products"; return; }
+
     setEditingSection(sectionId);
     switch (sectionId) {
       case "announcement": setEditData({ ...announcement }); break;
