@@ -54,26 +54,52 @@ const defaultBanners: Banner[] = [
 ];
 
 export function HeroSection() {
-  const [slides, setSlides] = useState<Banner[]>(defaultBanners);
+  const [slides, setSlides] = useState<Banner[]>((): Banner[] => {
+    // Try localStorage cache first - instant load
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("nextfitt_banners");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return defaultBanners;
+  });
   const [loaded, setLoaded] = useState(false);
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
 
   useEffect(() => {
-    fetch("/api/banners")
+    // Race between fetch and 3 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setLoaded(true); // Show whatever we have (cached or defaults) after 3s
+    }, 3000);
+
+    fetch("/api/banners", { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
+        clearTimeout(timeoutId);
         if (Array.isArray(data) && data.length > 0) {
           const activeBanners = data
             .filter((b: Banner) => b.isActive)
             .sort((a: Banner, b: Banner) => a.order - b.order);
           if (activeBanners.length > 0) {
             setSlides(activeBanners);
+            try { localStorage.setItem("nextfitt_banners", JSON.stringify(activeBanners)); } catch {}
           }
         }
       })
-      .catch(console.error)
-      .finally(() => setLoaded(true));
+      .catch(() => {
+        // Abort or network error - just show defaults/cached
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
+        setLoaded(true);
+      });
   }, []);
 
   useEffect(() => {
