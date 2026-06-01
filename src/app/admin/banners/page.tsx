@@ -19,6 +19,13 @@ interface Banner {
   isHero: boolean;
 }
 
+interface UploadStats {
+  originalSize: string;
+  optimizedSize: string;
+  savings: string;
+  format: string;
+}
+
 const emptyBanner: Banner = {
   id: "",
   title: "",
@@ -39,6 +46,7 @@ export default function AdminBannersPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStats, setUploadStats] = useState<UploadStats | null>(null);
 
   useEffect(() => {
     fetchBanners();
@@ -60,15 +68,14 @@ export default function AdminBannersPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file type
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are allowed");
       return;
     }
 
     setUploading(true);
+    setUploadStats(null);
     try {
-      // Upload to Supabase storage via our API
       const formData = new FormData();
       formData.append("file", file);
 
@@ -79,23 +86,29 @@ export default function AdminBannersPage() {
 
       if (res.ok) {
         const data = await res.json();
+        // Set the uploaded image URL immediately
         if (editing) {
           setEditing({ ...editing, imageUrl: data.url });
         }
-        // Show Sharp optimization savings
-        const savingsMsg = data.savings && data.originalSize && data.optimizedSize
-          ? ` (${data.originalSize} → ${data.optimizedSize}, ${data.savings} smaller as ${data.format})`
-          : "";
-        toast.success(`Image uploaded${savingsMsg}`);
+        // Save stats for permanent display
+        if (data.savings) {
+          setUploadStats({
+            originalSize: data.originalSize,
+            optimizedSize: data.optimizedSize,
+            savings: data.savings,
+            format: data.format,
+          });
+        }
+        toast.success("Image uploaded successfully");
       } else {
-        // Fallback: use FileReader to get base64 data URL
+        // Fallback: read as data URL
         const reader = new FileReader();
         reader.onload = (e) => {
           const url = e.target?.result as string;
           if (editing) {
             setEditing({ ...editing, imageUrl: url });
           }
-          toast.success("Image loaded (base64 fallback)");
+          toast.success("Image loaded");
         };
         reader.readAsDataURL(file);
       }
@@ -109,11 +122,13 @@ export default function AdminBannersPage() {
   const handleAddNew = () => {
     setEditing({ ...emptyBanner, order: banners.length + 1 });
     setShowForm(true);
+    setUploadStats(null);
   };
 
   const handleEdit = (banner: Banner) => {
     setEditing({ ...banner });
     setShowForm(true);
+    setUploadStats(null);
   };
 
   const handleDelete = async (banner: Banner) => {
@@ -160,10 +175,8 @@ export default function AdminBannersPage() {
 
     setSaving(true);
     try {
-      const url = editing.id ? "/api/banners" : "/api/banners";
       const method = editing.id ? "PUT" : "POST";
-
-      const res = await fetch(url, {
+      const res = await fetch("/api/banners", {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editing),
@@ -173,6 +186,7 @@ export default function AdminBannersPage() {
         toast.success(editing.id ? "Banner updated!" : "Banner created!");
         setShowForm(false);
         setEditing(null);
+        setUploadStats(null);
         fetchBanners();
       } else {
         toast.error("Failed to save banner");
@@ -202,7 +216,7 @@ export default function AdminBannersPage() {
       <div className="p-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <button onClick={() => { setShowForm(false); setEditing(null); }} className="text-sm text-gold-500 hover:text-gold-400 mb-1 block">
+            <button onClick={() => { setShowForm(false); setEditing(null); setUploadStats(null); }} className="text-sm text-gold-500 hover:text-gold-400 mb-1 block">
               ← Back to Banners
             </button>
             <h1 className="text-2xl font-bold">{editing.id ? "Edit Banner" : "Add Banner"}</h1>
@@ -221,12 +235,12 @@ export default function AdminBannersPage() {
           <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><ImageIcon className="h-5 w-5 text-gold-500" /> Banner Image</h2>
             <div className="space-y-4">
-              {/* Image Preview */}
+              {/* Image Preview - shows uploaded image immediately */}
               {editing.imageUrl && (
                 <div className="relative aspect-[21/9] rounded-xl overflow-hidden bg-muted">
                   <img src={editing.imageUrl} alt="Banner preview" className="h-full w-full object-cover" />
                   <button
-                    onClick={() => setEditing({ ...editing, imageUrl: "" })}
+                    onClick={() => { setEditing({ ...editing, imageUrl: "" }); setUploadStats(null); }}
                     className="absolute top-2 right-2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
                   >
                     <X className="h-4 w-4" />
@@ -234,22 +248,47 @@ export default function AdminBannersPage() {
                 </div>
               )}
 
+              {/* Sharp Optimization Stats - permanent display */}
+              {uploadStats && (
+                <div className="rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-green-600 dark:text-green-400">✓ Sharp Optimization</p>
+                    <span className="text-xs font-mono text-green-600 dark:text-green-400">{uploadStats.format}</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-lg bg-background/50 p-2">
+                      <p className="text-muted-foreground">Original</p>
+                      <p className="font-semibold">{uploadStats.originalSize}</p>
+                    </div>
+                    <div className="rounded-lg bg-background/50 p-2">
+                      <p className="text-muted-foreground">Optimized</p>
+                      <p className="font-semibold">{uploadStats.optimizedSize}</p>
+                    </div>
+                    <div className="rounded-lg bg-background/50 p-2">
+                      <p className="text-muted-foreground">Saved</p>
+                      <p className="font-semibold text-green-500">{uploadStats.savings}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload area */}
               <div className="flex gap-3">
                 <label className="flex-1 cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center hover:border-gold-500 transition-colors">
                   <input type="file" accept="image/*" onChange={handleUploadImage} className="hidden" />
                   <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
                   <p className="text-sm font-medium">
-                    {uploading ? "Uploading..." : "Upload Image"}
+                    {uploading ? "Uploading & Optimizing..." : "Upload New Image"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP (max 5MB)</p>
+                  <p className="text-xs text-muted-foreground mt-1">Auto-converted to AVIF/WebP by Sharp</p>
                 </label>
                 <div className="flex-1 space-y-2">
-                  <p className="text-sm font-medium">Or use a URL</p>
+                  <p className="text-sm font-medium">Or paste image URL</p>
                   <input
                     type="text"
                     value={editing.imageUrl}
                     onChange={(e) => setEditing({ ...editing, imageUrl: e.target.value })}
-                    placeholder="https://images.unsplash.com/..."
+                    placeholder="https://example.com/image.jpg"
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:border-gold-500 focus:outline-none font-mono"
                   />
                 </div>
@@ -257,7 +296,7 @@ export default function AdminBannersPage() {
             </div>
           </div>
 
-          {/* Content */}
+          {/* Banner Content */}
           <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">Banner Content</h2>
             <div className="space-y-4">
