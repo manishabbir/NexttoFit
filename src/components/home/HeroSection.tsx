@@ -17,52 +17,73 @@ interface Banner {
   isActive: boolean;
 }
 
+const defaultBanners: Banner[] = [
+  {
+    id: "default-1",
+    title: "ELEVATE YOUR",
+    subtitle: "EVERYDAY STYLE",
+    description: "Premium craftsmanship meets modern sophistication.",
+    linkText: "Shop Men's Collection",
+    linkUrl: "/men",
+    imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80",
+    order: 1,
+    isActive: true,
+  },
+  {
+    id: "default-2",
+    title: "REDEFINING",
+    subtitle: "FEMININE ELEGANCE",
+    description: "From timeless classics to contemporary designs.",
+    linkText: "Shop Women's Collection",
+    linkUrl: "/women",
+    imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1920&q=80",
+    order: 2,
+    isActive: true,
+  },
+  {
+    id: "default-3",
+    title: "NEW SEASON",
+    subtitle: "NOW ARRIVING",
+    description: "Be the first to explore our latest drops.",
+    linkText: "View New Arrivals",
+    linkUrl: "/new-arrivals",
+    imageUrl: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1920&q=80",
+    order: 3,
+    isActive: true,
+  },
+];
+
 export function HeroSection() {
-  const [slides, setSlides] = useState<Banner[] | null>(null);
+  const [slides, setSlides] = useState<Banner[]>(defaultBanners);
+  const [loaded, setLoaded] = useState(false);
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
 
   useEffect(() => {
-    fetchBanners();
+    fetch("/api/banners")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const activeBanners = data
+            .filter((b: Banner) => b.isActive)
+            .sort((a: Banner, b: Banner) => a.order - b.order);
+          if (activeBanners.length > 0) {
+            setSlides(activeBanners);
+          }
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoaded(true));
   }, []);
 
-  const fetchBanners = async () => {
-    try {
-      const res = await fetch("/api/banners");
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const activeBanners = data
-          .filter((b: Banner) => b.isActive)
-          .sort((a: Banner, b: Banner) => a.order - b.order);
-        setSlides(activeBanners.length > 0 ? activeBanners : null);
-      } else {
-        setSlides(null); // No banners found, will show defaults on server
-      }
-    } catch (error) {
-      console.error("Error fetching banners:", error);
-      setSlides(null); // On error, let the server render defaults
-    }
-  };
-
-  // Show loading skeleton while fetching - no default flash
-  if (slides === null) {
-    return (
-      <section className="relative h-[80vh] min-h-[600px] max-h-[900px] overflow-hidden bg-gradient-to-r from-luxury-950 via-luxury-900 to-luxury-950">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500" />
-        </div>
-      </section>
-    );
-  }
-
   useEffect(() => {
-    if (!slides || slides.length <= 1) return;
+    if (slides.length <= 1) return;
     const timer = setInterval(() => {
       setDirection(1);
       setCurrent((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [slides]);
+  }, [slides.length]);
 
   const goToSlide = (index: number) => {
     setDirection(index > current ? 1 : -1);
@@ -96,7 +117,17 @@ export function HeroSection() {
     }),
   };
 
-  // Determine alignment (alternate for visual variety)
+  // Show loading skeleton while fetching
+  if (!loaded) {
+    return (
+      <section className="relative h-[80vh] min-h-[600px] max-h-[900px] overflow-hidden bg-gradient-to-r from-luxury-950 via-luxury-900 to-luxury-950">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500" />
+        </div>
+      </section>
+    );
+  }
+
   const align = current % 2 === 0 ? "left" : "right";
 
   return (
