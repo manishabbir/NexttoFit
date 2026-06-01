@@ -56,13 +56,13 @@ export function HeroSection() {
   }
 
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (!slides || slides.length <= 1) return;
     const timer = setInterval(() => {
       setDirection(1);
       setCurrent((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [slides]);
 
   const goToSlide = (index: number) => {
     setDirection(index > current ? 1 : -1);
