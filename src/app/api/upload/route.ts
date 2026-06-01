@@ -25,11 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only image files allowed (JPG, PNG, WebP)" }, { status: 400 });
     }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
-    }
-
+    // No file size limit - Sharp will optimize regardless of size
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const inputBuffer = Buffer.from(bytes);

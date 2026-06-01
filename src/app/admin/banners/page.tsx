@@ -60,12 +60,6 @@ export default function AdminBannersPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
-      return;
-    }
-
     // Check file type
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are allowed");
@@ -88,7 +82,11 @@ export default function AdminBannersPage() {
         if (editing) {
           setEditing({ ...editing, imageUrl: data.url });
         }
-        toast.success("Image uploaded successfully!");
+        // Show Sharp optimization savings
+        const savingsMsg = data.savings && data.originalSize && data.optimizedSize
+          ? ` (${data.originalSize} → ${data.optimizedSize}, ${data.savings} smaller as ${data.format})`
+          : "";
+        toast.success(`Image uploaded${savingsMsg}`);
       } else {
         // Fallback: use FileReader to get base64 data URL
         const reader = new FileReader();
