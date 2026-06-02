@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { FileImage, X, ZoomIn, ZoomOut, Maximize2, Monitor, Smartphone, Tablet, Hand } from "lucide-react";
+import { useState, useRef } from "react";
+import { FileImage, X, ZoomIn, Monitor, Smartphone, Tablet, Maximize2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 function formatSize(bytes: number): string {
@@ -10,206 +10,153 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-const frames = [
-  { id: "banner", label: "Hero Banner", width: "100%", height: "400px", icon: Monitor, desc: "Homepage hero slider" },
-  { id: "product", label: "Product Card", width: "300px", height: "400px", icon: Smartphone, desc: "Product grid listing" },
-  { id: "blog", label: "Blog Featured", width: "100%", height: "300px", icon: Tablet, desc: "Blog post header" },
-  { id: "square", label: "Square", width: "300px", height: "300px", icon: Maximize2, desc: "Social/Instagram post" },
+const FRAMES = [
+  { id: "banner", label: "Hero Banner", w: "100%", h: "400px", icon: Monitor },
+  { id: "product", label: "Product Card", w: "300px", h: "400px", icon: Smartphone },
+  { id: "blog", label: "Blog Header", w: "100%", h: "300px", icon: Tablet },
+  { id: "square", label: "Square", w: "300px", h: "300px", icon: Maximize2 },
 ];
 
 export function ImageUploader({
   imageUrl,
   onImageChange,
-  aspectRatio = "21/9",
 }: {
   imageUrl: string;
   onImageChange: (url: string) => void;
-  aspectRatio?: string;
 }) {
   const [uploading, setUploading] = useState(false);
-  const [stats, setStats] = useState<{ orig: string; opt: string; save: string; fmt: string } | null>(null);
+  const [stats, setStats] = useState<any>(null);
   const [origSize, setOrigSize] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(100);
-  const [selectedFrame, setSelectedFrame] = useState("banner");
+  const [zoom, setZoom] = useState(1);
+  const [frame, setFrame] = useState("banner");
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const [dragOrigin, setDragOrigin] = useState({ x: 0, y: 0 });
   const [showPreview, setShowPreview] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (zoom <= 100) return; // Only drag when zoomed in
+  const curFrame = FRAMES.find((f) => f.id === frame) || FRAMES[0];
+  const canDrag = zoom > 1;
+
+  // Mouse handlers for dragging
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!canDrag) return;
     e.preventDefault();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    if (imageContainerRef.current) {
-      imageContainerRef.current.style.cursor = "grabbing";
-    }
-  }, [zoom, pan]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || zoom <= 100) return;
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
-    setPan({ x: newX, y: newY });
-  }, [isDragging, zoom, dragStart]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    if (imageContainerRef.current) {
-      imageContainerRef.current.style.cursor = zoom > 100 ? "grab" : "default";
-    }
-  }, [zoom]);
-
-  const resetView = () => {
-    setZoom(100);
-    setPan({ x: 0, y: 0 });
+    setDragging(true);
+    setDragOrigin({ x: e.clientX - offset.x, y: e.clientY - offset.y });
   };
-
-  const handleZoomChange = (newZoom: number) => {
-    const clamped = Math.max(25, Math.min(500, newZoom));
-    setZoom(clamped);
-    // Clamp pan so image doesn't go too far off screen
-    if (clamped <= 100) setPan({ x: 0, y: 0 });
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!dragging || !canDrag) return;
+    setOffset({ x: e.clientX - dragOrigin.x, y: e.clientY - dragOrigin.y });
   };
+  const onMouseUp = () => setDragging(false);
+
+  const resetView = () => { setZoom(1); setOffset({ x: 0, y: 0 }); };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Only image files allowed");
-      return;
-    }
-    const sizeLabel = formatSize(file.size);
-    setOrigSize(sizeLabel);
+    if (!file || !file.type.startsWith("image/")) { toast.error("Only images allowed"); return; }
+    setOrigSize(formatSize(file.size));
     setUploading(true);
-    setStats(null);
     setShowPreview(true);
     resetView();
-
     try {
-      const fd = new FormData();
-      fd.append("file", file);
+      const fd = new FormData(); fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        onImageChange(data.url);
-        if (data.originalSize && data.optimizedSize) {
-          setStats({ orig: data.originalSize, opt: data.optimizedSize, save: data.savings || "0%", fmt: data.format || "AVIF" });
-        }
-        toast.success("Image uploaded & optimized by Sharp");
+      const d = await res.json();
+      if (res.ok && d.url) {
+        onImageChange(d.url);
+        if (d.savings) setStats(d);
+        toast.success("Image uploaded & optimized");
       } else {
-        const reader = new FileReader();
-        reader.onload = (ev) => { const url = ev.target?.result as string; if (url) onImageChange(url); };
-        reader.readAsDataURL(file);
-        toast.success("Image loaded (fallback)");
+        const r = new FileReader();
+        r.onload = (ev) => { const u = ev.target?.result as string; if (u) onImageChange(u); };
+        r.readAsDataURL(file);
       }
     } catch { toast.error("Upload failed"); }
     finally { setUploading(false); }
   };
 
-  const clearImage = () => {
-    onImageChange(""); setStats(null); setOrigSize(null); setShowPreview(false); resetView();
-    if (inputRef.current) inputRef.current.value = "";
-  };
-
-  const currentFrame = frames.find((f) => f.id === selectedFrame) || frames[0];
+  // Slider zoom (1-5 range mapped to 100%-500%)
+  const zoomPercent = Math.round(zoom * 100);
+  const displayZoom = Math.round(zoom * 100);
 
   return (
     <div className="space-y-3">
-      {/* Upload + URL */}
+      {/* Upload row */}
       <div className="flex gap-2">
         <label className="flex-1 cursor-pointer rounded-lg border-2 border-dashed border-border p-4 text-center hover:border-gold-500 transition-colors">
           <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
           <FileImage className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-          <p className="text-xs font-medium">{uploading ? "Sharp processing..." : "Upload"}</p>
+          <p className="text-xs font-medium">{uploading ? "Processing..." : "Upload Image"}</p>
           <p className="text-[10px] text-muted-foreground">Auto AVIF/WebP</p>
         </label>
         <div className="flex-[2] space-y-1">
-          <p className="text-[10px] text-muted-foreground">Or image URL</p>
+          <p className="text-[10px] text-muted-foreground">Or paste image URL</p>
           <input type="text" value={imageUrl} onChange={(e) => { onImageChange(e.target.value); if (e.target.value) { setShowPreview(true); resetView(); } }}
-            placeholder="https://..." className="w-full rounded-lg border border-border bg-background px-2.5 py-2 text-xs focus:border-gold-500 focus:outline-none font-mono" />
+            placeholder="https://..." className="w-full rounded-lg border border-border bg-background px-2.5 py-2 text-xs font-mono focus:border-gold-500 focus:outline-none" />
         </div>
       </div>
 
-      {/* Preview Section */}
+      {/* Preview */}
       {showPreview && imageUrl && (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           {/* Toolbar */}
-          <div className="flex items-center justify-between p-2 border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
             <div className="flex items-center gap-1">
-              {frames.map((f) => (
-                <button key={f.id} onClick={() => setSelectedFrame(f.id)}
-                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-medium transition-colors ${selectedFrame === f.id ? "bg-gold-500/20 text-gold-600" : "text-muted-foreground hover:bg-muted"}`}>
-                  <f.icon className="h-3 w-3" /> <span className="hidden sm:inline">{f.label}</span>
+              {FRAMES.map((f) => (
+                <button key={f.id} onClick={() => { setFrame(f.id); resetView(); }}
+                  className={`rounded-lg px-2.5 py-1.5 text-[10px] font-medium transition-colors ${frame === f.id ? "bg-gold-500/20 text-gold-600" : "text-muted-foreground hover:bg-muted"}`}>
+                  <f.icon className="h-3 w-3 inline mr-1" />{f.label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1">
-              <button onClick={() => resetView()} className="rounded p-1 hover:bg-muted text-muted-foreground" title="Reset view">
-                <Maximize2 className="h-3 w-3" />
-              </button>
-              <button onClick={() => handleZoomChange(zoom - 25)} className="rounded p-1 hover:bg-muted text-muted-foreground">
-                <ZoomOut className="h-3.5 w-3.5" />
-              </button>
-              <span className="text-[10px] text-muted-foreground font-medium w-9 text-center">{zoom}%</span>
-              <button onClick={() => handleZoomChange(zoom + 25)} className="rounded p-1 hover:bg-muted text-muted-foreground">
-                <ZoomIn className="h-3.5 w-3.5" />
-              </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground w-10 text-right">{displayZoom}%</span>
+              <input type="range" min="100" max="500" value={zoomPercent}
+                onChange={(e) => setZoom(parseInt(e.target.value) / 100)}
+                className="w-20 h-1 accent-gold-500 cursor-pointer" />
+              <ZoomIn className="h-3 w-3 text-muted-foreground" />
             </div>
           </div>
 
-          {/* Frame */}
-          <div
-            className="flex items-center justify-center p-4 bg-gradient-to-br from-gray-100/50 to-gray-200/50 dark:from-gray-900/50 dark:to-gray-800/50 select-none"
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            <div className="relative overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300"
-              style={{ width: currentFrame.width, maxWidth: "100%", height: currentFrame.height, maxHeight: "70vh" }}>
-              
-              <div className="absolute top-2 left-2 z-20 rounded-md bg-black/60 px-2 py-0.5 text-[9px] text-white/80 backdrop-blur-sm">
-                {currentFrame.label}
-              </div>
-
-              {/* Drag hint when zoomed */}
-              {zoom > 100 && !isDragging && (
-                <div className="absolute top-2 right-2 z-20 rounded-md bg-black/60 px-2 py-1 text-[9px] text-white/70 backdrop-blur-sm flex items-center gap-1">
-                  <Hand className="h-3 w-3" /> Drag to pan
-                </div>
-              )}
-
-              {/* Image container with pan */}
+          {/* Frame with image */}
+          <div className="bg-[#f0f0f0] dark:bg-[#1a1a1a]" onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
+            <div className="mx-auto" style={{ width: curFrame.w, maxWidth: "100%", height: curFrame.h, maxHeight: "60vh" }}>
               <div
-                ref={imageContainerRef}
-                className="h-full w-full overflow-hidden"
-                style={{ cursor: zoom > 100 ? "grab" : "default" }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
+                ref={containerRef}
+                className="relative h-full w-full overflow-hidden cursor-grab active:cursor-grabbing"
+                onMouseDown={onMouseDown}
+                onMouseMove={onMouseMove}
               >
                 <img
                   src={imageUrl}
-                  alt="Preview"
+                  alt=""
                   draggable={false}
-                  className="transition-transform duration-75"
+                  className="absolute top-1/2 left-1/2"
                   style={{
-                    transform: `scale(${zoom / 100}) translate(${pan.x / (zoom / 100)}px, ${pan.y / (zoom / 100)}px)`,
-                    transformOrigin: "center center",
-                    width: "100%",
-                    height: "100%",
-                    objectFit: zoom <= 100 ? "contain" : "none",
+                    width: `${zoom * 100}%`,
+                    height: `${zoom * 100}%`,
+                    maxWidth: `${zoom * 100}%`,
+                    maxHeight: `${zoom * 100}%`,
+                    objectFit: "cover",
+                    transform: `translate(calc(-50% + ${offset.x / zoom}px), calc(-50% + ${offset.y / zoom}px))`,
+                    transition: dragging ? "none" : "width 0.2s, height 0.2s",
                   }}
                 />
+                {/* Dark overlay outside center */}
+                <div className="absolute inset-0 pointer-events-none" />
               </div>
             </div>
           </div>
 
-          {/* Bottom bar */}
+          {/* Bottom info */}
           <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-muted/20">
-            {origSize && <span className="rounded-md bg-black/10 dark:bg-white/10 px-2 py-0.5 text-[10px]">Original: <strong>{origSize}</strong></span>}
-            {stats && <span className="rounded-md bg-green-500/10 px-2 py-0.5 text-[10px] text-green-600">Sharp: <strong>{stats.opt}</strong> <span className="text-green-500">({stats.save} ↓)</span></span>}
-            {zoom > 100 && <span className="text-[10px] text-muted-foreground ml-auto">Drag image to pan · Scroll to zoom</span>}
+            {origSize && <span className="text-[10px]">Original: <strong>{origSize}</strong></span>}
+            {stats && <span className="text-[10px] text-green-600">Optimized: <strong>{stats.optimizedSize}</strong> ({stats.savings} ↓)</span>}
+            {canDrag && <span className="text-[10px] text-muted-foreground ml-auto">Drag to reposition · Slide to zoom</span>}
+            <button onClick={resetView} className="ml-1 text-[10px] text-gold-500 hover:text-gold-400 font-medium">Reset</button>
           </div>
         </div>
       )}
@@ -219,12 +166,12 @@ export function ImageUploader({
         <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-2.5">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-green-600">Sharp Optimization</span>
-            <span className="text-[10px] font-mono bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded">{stats.fmt}</span>
+            <span className="text-[10px] font-mono bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded">{stats.format}</span>
           </div>
           <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-            <div className="rounded bg-background/60 p-1.5"><span className="text-muted-foreground">Original </span><strong>{stats.orig}</strong></div>
-            <div className="rounded bg-background/60 p-1.5"><span className="text-muted-foreground">Optimized </span><strong>{stats.opt}</strong></div>
-            <div className="rounded bg-background/60 p-1.5"><span className="text-muted-foreground">Saved </span><strong className="text-green-500">{stats.save}</strong></div>
+            <div className="rounded bg-background/60 p-1.5"><span className="text-muted-foreground">Original </span><strong>{stats.originalSize}</strong></div>
+            <div className="rounded bg-background/60 p-1.5"><span className="text-muted-foreground">Optimized </span><strong>{stats.optimizedSize}</strong></div>
+            <div className="rounded bg-background/60 p-1.5"><span className="text-muted-foreground">Saved </span><strong className="text-green-500">{stats.savings}</strong></div>
           </div>
         </div>
       )}
