@@ -215,7 +215,6 @@ export default function AdminProductsPage() {
                 <ImageUploader
                   imageUrl={editing.imageUrl}
                   onImageChange={(url) => setEditing((prev) => prev ? { ...prev, imageUrl: url } : prev)}
-                  aspectRatio="4/3"
                 />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

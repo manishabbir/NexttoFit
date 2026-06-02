@@ -170,7 +170,6 @@ export default function AdminBannersPage() {
             <ImageUploader
               imageUrl={editing.imageUrl}
               onImageChange={(url) => setEditing({ ...editing, imageUrl: url })}
-              aspectRatio="21/9"
             />
           </div>
 
