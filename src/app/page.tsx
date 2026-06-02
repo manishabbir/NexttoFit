@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Shield, Truck, RotateCcw } from "lucide-react";
 import { useState, useEffect } from "react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 const iconMap: Record<string, React.ElementType> = { Truck, Shield, RotateCcw, Sparkles };
 
@@ -127,17 +128,10 @@ export default function HomePage() {
             className="flex items-end justify-between mb-10"
           >
             <div>
-              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
-                Premium Collection
-              </span>
-              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
-                Featured Products
-              </h2>
+              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">Premium Collection</span>
+              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">Featured Products</h2>
             </div>
-            <Link
-              href="/new-arrivals"
-              className="hidden items-center gap-2 text-sm font-medium text-gold-500 transition-colors hover:text-gold-400 md:flex"
-            >
+            <Link href="/new-arrivals" className="hidden items-center gap-2 text-sm font-medium text-gold-500 transition-colors hover:text-gold-400 md:flex">
               View All <ArrowRight className="h-4 w-4" />
             </Link>
           </motion.div>
@@ -148,10 +142,7 @@ export default function HomePage() {
                 return (
                   <div key={index} className="animate-pulse">
                     <div className="aspect-[3/4] rounded-2xl bg-muted" />
-                    <div className="mt-4 space-y-2">
-                      <div className="h-4 w-3/4 rounded bg-muted" />
-                      <div className="h-3 w-1/2 rounded bg-muted" />
-                    </div>
+                    <div className="mt-4 space-y-2"><div className="h-4 w-3/4 rounded bg-muted" /><div className="h-3 w-1/2 rounded bg-muted" /></div>
                   </div>
                 );
               }
@@ -160,32 +151,22 @@ export default function HomePage() {
                 <div key={product.id} className="group relative">
                   <Link href={`/product/${product.slug}`}>
                     <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
-                      <img
+                      <OptimizedImage
                         src={primaryImage?.url || product.images?.[0]?.url}
                         alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                        <span className="block text-sm font-medium text-white">Quick View</span>
-                      </div>
-                      {product.isNewArrival && (
-                        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">New</span>
-                      )}
-                      {product.isOnSale && (
-                        <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">Sale</span>
-                      )}
+                      {product.isNewArrival && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">New</span>}
+                      {product.isOnSale && <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">Sale</span>}
                     </div>
                   </Link>
                   <div className="mt-4 space-y-1">
-                    <Link href={`/product/${product.slug}`} className="block text-sm font-medium transition-colors hover:text-gold-500">
-                      {product.name}
-                    </Link>
+                    <Link href={`/product/${product.slug}`} className="block text-sm font-medium transition-colors hover:text-gold-500">{product.name}</Link>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold">Rs.{Number(product.price).toLocaleString()}</span>
-                      {product.comparePrice && (
-                        <span className="text-xs text-muted-foreground line-through">Rs.{Number(product.comparePrice).toLocaleString()}</span>
-                      )}
+                      {product.comparePrice && <span className="text-xs text-muted-foreground line-through">Rs.{Number(product.comparePrice).toLocaleString()}</span>}
                     </div>
                   </div>
                 </div>
@@ -194,10 +175,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-8 text-center md:hidden">
-            <Link
-              href="/new-arrivals"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
-            >
+            <Link href="/new-arrivals" className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted">
               View All Products <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -207,41 +185,25 @@ export default function HomePage() {
       {/* Category Showcase */}
       <section className="py-16 md:py-24 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
-              Shop by
-            </span>
-            <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
-              Categories
-            </h2>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+            <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">Shop by</span>
+            <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">Categories</h2>
           </motion.div>
 
           <div className="grid gap-6 md:grid-cols-3">
             {categories.map((category: any, index: number) => (
-              <motion.div
-                key={category.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
+              <motion.div key={category.name} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
                 <Link href={category.href} className="group block">
                   <div className="relative aspect-[4/5] overflow-hidden rounded-3xl">
-                    <img
+                    <OptimizedImage
                       src={category.image}
                       alt={category.name}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="h-full w-full transition-transform duration-700 group-hover:scale-110"
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                      <h3 className="font-display text-2xl font-bold text-white md:text-3xl">
-                        {category.name}
-                      </h3>
+                      <h3 className="font-display text-2xl font-bold text-white md:text-3xl">{category.name}</h3>
                       <p className="mt-1 text-sm text-white/60">{category.count}</p>
                       <div className="mt-4 flex items-center gap-2 text-sm font-medium text-gold-500 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all">
                         Shop Now <ArrowRight className="h-4 w-4" />
@@ -259,42 +221,27 @@ export default function HomePage() {
       {promoBanner.enabled && (
         <section className="relative py-20 md:py-32 overflow-hidden">
           <div className="absolute inset-0">
-            <img
+            <OptimizedImage
               src={promoBanner.imageUrl}
               alt="Promo banner"
-              className="h-full w-full object-cover"
+              className="h-full w-full"
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
           </div>
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="max-w-lg"
-            >
-              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
-                {promoBanner.tag}
-              </span>
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="max-w-lg">
+              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">{promoBanner.tag}</span>
               <h2 className="mt-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">
-                {promoBanner.title}
-                <br />
+                {promoBanner.title}<br />
                 <span className="text-gradient-gold">{promoBanner.titleHighlight}</span>
               </h2>
-              <p className="mt-6 text-lg leading-relaxed text-white/70">
-                {promoBanner.description}
-              </p>
+              <p className="mt-6 text-lg leading-relaxed text-white/70">{promoBanner.description}</p>
               <div className="mt-8 flex gap-4">
-                <Link
-                  href={promoBanner.button1Link}
-                  className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-8 py-4 text-sm font-semibold text-black transition-all hover:bg-gold-600"
-                >
+                <Link href={promoBanner.button1Link} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-8 py-4 text-sm font-semibold text-black transition-all hover:bg-gold-600">
                   {promoBanner.button1Text} <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link
-                  href={promoBanner.button2Link}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-white/10"
-                >
+                <Link href={promoBanner.button2Link} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-white/10">
                   {promoBanner.button2Text}
                 </Link>
               </div>
@@ -306,24 +253,12 @@ export default function HomePage() {
       {/* Bestsellers Grid */}
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex items-end justify-between mb-10"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-end justify-between mb-10">
             <div>
-              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
-                Best Sellers
-              </span>
-              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
-                Most Popular
-              </h2>
+              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">Best Sellers</span>
+              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">Most Popular</h2>
             </div>
-            <Link
-              href="/men"
-              className="hidden items-center gap-2 text-sm font-medium text-gold-500 transition-colors hover:text-gold-400 md:flex"
-            >
+            <Link href="/men" className="hidden items-center gap-2 text-sm font-medium text-gold-500 transition-colors hover:text-gold-400 md:flex">
               Shop All <ArrowRight className="h-4 w-4" />
             </Link>
           </motion.div>
@@ -343,8 +278,12 @@ export default function HomePage() {
                 <div key={product.id} className="group relative">
                   <Link href={`/product/${product.slug}`}>
                     <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
-                      <img src={primaryImage?.url || product.images?.[0]?.url} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <OptimizedImage
+                        src={primaryImage?.url || product.images?.[0]?.url}
+                        alt={product.name}
+                        className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
                       {product.isNewArrival && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">New</span>}
                       {product.isOnSale && <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black backdrop-blur-sm">Sale</span>}
                     </div>
@@ -367,23 +306,11 @@ export default function HomePage() {
       {socialSection.enabled && (
         <section className="py-16 md:py-24 bg-card">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-10"
-            >
-              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">
-                {socialSection.title}
-              </span>
-              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
-                {socialSection.handle}
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                {socialSection.subtitle}
-              </p>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
+              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">{socialSection.title}</span>
+              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">{socialSection.handle}</h2>
+              <p className="mt-2 text-muted-foreground">{socialSection.subtitle}</p>
             </motion.div>
-
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               {socialImages.map((img, i) => (
                 <motion.div
@@ -394,10 +321,11 @@ export default function HomePage() {
                   transition={{ delay: i * 0.1 }}
                   className="relative aspect-square overflow-hidden rounded-2xl group cursor-pointer"
                 >
-                  <img
+                  <OptimizedImage
                     src={img}
                     alt="Social media post"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="h-full w-full transition-transform duration-500 group-hover:scale-110"
+                    sizes="(max-width: 768px) 50vw, 25vw"
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <span className="text-white font-medium text-sm">Shop the Look</span>

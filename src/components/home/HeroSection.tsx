@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 interface Banner {
   id: string;
@@ -55,7 +56,6 @@ const defaultBanners: Banner[] = [
 
 export function HeroSection() {
   const [slides, setSlides] = useState<Banner[]>((): Banner[] => {
-    // Try localStorage cache first - instant load
     if (typeof window !== "undefined") {
       try {
         const cached = localStorage.getItem("nextfitt_banners");
@@ -67,39 +67,31 @@ export function HeroSection() {
     }
     return defaultBanners;
   });
-  const [loaded, setLoaded] = useState(false);
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    // Race between fetch and 3 second timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      setLoaded(true); // Show whatever we have (cached or defaults) after 3s
-    }, 3000);
+    // Avoid refetching
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
 
-    fetch("/api/banners", { signal: controller.signal })
+    fetch("/api/banners")
       .then((res) => res.json())
       .then((data) => {
-        clearTimeout(timeoutId);
         if (Array.isArray(data) && data.length > 0) {
           const activeBanners = data
             .filter((b: Banner) => b.isActive)
             .sort((a: Banner, b: Banner) => a.order - b.order);
           if (activeBanners.length > 0) {
             setSlides(activeBanners);
-            try { localStorage.setItem("nextfitt_banners", JSON.stringify(activeBanners)); } catch {}
+            try {
+              localStorage.setItem("nextfitt_banners", JSON.stringify(activeBanners));
+            } catch {}
           }
         }
       })
-      .catch(() => {
-        // Abort or network error - just show defaults/cached
-      })
-      .finally(() => {
-        clearTimeout(timeoutId);
-        setLoaded(true);
-      });
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -133,26 +125,12 @@ export function HeroSection() {
       x: direction > 0 ? "100%" : "-100%",
       opacity: 0,
     }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
+    center: { x: 0, opacity: 1 },
     exit: (direction: number) => ({
       x: direction > 0 ? "-100%" : "100%",
       opacity: 0,
     }),
   };
-
-  // Show loading skeleton while fetching
-  if (!loaded) {
-    return (
-      <section className="relative h-[80vh] min-h-[600px] max-h-[900px] overflow-hidden bg-gradient-to-r from-luxury-950 via-luxury-900 to-luxury-950">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500" />
-        </div>
-      </section>
-    );
-  }
 
   const align = current % 2 === 0 ? "left" : "right";
 
@@ -170,10 +148,12 @@ export function HeroSection() {
           className="absolute inset-0"
         >
           <div className="absolute inset-0">
-            <img
+            <OptimizedImage
               src={slide.imageUrl}
               alt={slide.title}
-              className="h-full w-full object-cover"
+              className="h-full w-full"
+              priority
+              sizes="100vw"
             />
             <div
               className={`absolute inset-0 ${
