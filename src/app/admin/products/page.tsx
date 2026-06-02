@@ -213,7 +213,6 @@ export default function AdminProductsPage() {
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Product Image</label>
                 <ImageUploader
-                  key={editing.imageUrl || "empty"}
                   imageUrl={editing.imageUrl}
                   onImageChange={(url) => setEditing((prev) => prev ? { ...prev, imageUrl: url } : prev)}
                   aspectRatio="4/3"
