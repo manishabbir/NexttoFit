@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { SlidersHorizontal, ChevronDown } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 export default function WomenPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -65,7 +66,7 @@ export default function WomenPage() {
                 <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group">
                   <Link href={`/product/${product.slug}`}>
                     <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
-                      {img && <img src={img.url} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
+                      {img && <OptimizedImage src={img.url} alt={product.name} className="h-full w-full transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />}
                       {product.isNewArrival && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase text-black">New</span>}
                       {product.isOnSale && <span className="absolute left-3 top-3 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-semibold uppercase text-black">Sale</span>}
                       {product.comparePrice && Number(product.comparePrice) > 0 && (
