@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, Grid3X3, List, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 export default function MenPage() {
@@ -12,29 +12,37 @@ export default function MenPage() {
   const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
-    fetchMenProducts();
+    // Use category filter directly on backend - no client-side filtering of ALL products
+    fetch("/api/products?limit=20&category=suits")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        } else {
+          // Fallback: fetch featured as men's sample
+          fetch("/api/products?featured=true&limit=8")
+            .then((r) => r.json())
+            .then((d) => { if (Array.isArray(d)) setProducts(d); })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+          return;
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const fetchMenProducts = async () => {
-    try {
-      const res = await fetch("/api/products?all=true");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        // Filter men's products (products in "Suits", "Coats", "Traditional" categories, or men's items)
-        const menProducts = data.filter((p: any) => {
-          const catNames = p.categories?.map((c: any) => c.category?.name?.toLowerCase()) || [];
-          const menKeywords = ["suit", "coat", "shirt", "blazer", "chino", "scarf", "belt", "jacket", "men"];
-          const name = p.name?.toLowerCase() || "";
-          return menKeywords.some((k) => name.includes(k)) || catNames.some((c: string) => menKeywords.some((k) => c.includes(k)));
-        });
-        setProducts(menProducts.length > 0 ? menProducts : data.slice(0, 8));
-      }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
   if (loading) {
-    return <div className="mx-auto max-w-7xl px-4 py-12"><div className="animate-pulse space-y-4"><div className="h-8 w-48 rounded bg-muted" /><div className="grid grid-cols-4 gap-4"><div className="h-80 rounded-2xl bg-muted" /><div className="h-80 rounded-2xl bg-muted" /><div className="h-80 rounded-2xl bg-muted" /><div className="h-80 rounded-2xl bg-muted" /></div></div></div>;
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded bg-muted" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-80 rounded-2xl bg-muted" />)}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -52,17 +60,6 @@ export default function MenPage() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">{products.length} products</p>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="appearance-none rounded-xl border border-border bg-background px-4 py-2 pr-8 text-sm focus:border-gold-500 focus:outline-none">
-                  <option value="newest">Newest</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="popular">Most Popular</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
           </div>
         </div>
       </div>

@@ -3,37 +3,43 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 export default function WomenPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
-    fetchWomenProducts();
+    fetch("/api/products?limit=20&category=dresses")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        } else {
+          fetch("/api/products?featured=true&limit=8")
+            .then((r) => r.json())
+            .then((d) => { if (Array.isArray(d)) setProducts(d); })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+          return;
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const fetchWomenProducts = async () => {
-    try {
-      const res = await fetch("/api/products?all=true");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        const womenProducts = data.filter((p: any) => {
-          const catNames = p.categories?.map((c: any) => c.category?.name?.toLowerCase()) || [];
-          const womenKeywords = ["gown", "dress", "kurta", "dupatta", "sandal", "jewelry", "bag", "women", "chiffon", "silk"];
-          const name = p.name?.toLowerCase() || "";
-          return womenKeywords.some((k) => name.includes(k)) || catNames.some((c: string) => womenKeywords.some((k) => c.includes(k)));
-        });
-        setProducts(womenProducts.length > 0 ? womenProducts : data.slice(0, 8));
-      }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
   if (loading) {
-    return <div className="mx-auto max-w-7xl px-4 py-12"><div className="animate-pulse space-y-4"><div className="h-8 w-48 rounded bg-muted" /><div className="grid grid-cols-4 gap-4"><div className="h-80 rounded-2xl bg-muted" /><div className="h-80 rounded-2xl bg-muted" /><div className="h-80 rounded-2xl bg-muted" /><div className="h-80 rounded-2xl bg-muted" /></div></div></div>;
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded bg-muted" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-80 rounded-2xl bg-muted" />)}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
