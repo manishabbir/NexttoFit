@@ -6,7 +6,6 @@ import { Heart, Eye, ShoppingBag } from "lucide-react";
 import { useWishlistStore, useUIStore } from "@/store";
 import { formatPrice, calculateDiscount } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
 
 interface ProductCardProps {
   product: {
@@ -47,18 +46,18 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
           {/* Primary Image */}
           <div className="product-image-zoom h-full w-full">
-            <OptimizedImage
+            <img
               src={primaryImage?.url || "/placeholder.svg"}
               alt={primaryImage?.alt || product.name}
               className="h-full w-full object-cover transition-opacity duration-500 group-hover:opacity-0"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              loading="lazy"
             />
             {secondaryImage && (
-              <OptimizedImage
+              <img
                 src={secondaryImage.url}
                 alt={secondaryImage.alt || product.name}
                 className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                loading="lazy"
               />
             )}
           </div>

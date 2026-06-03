@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store";
 import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
-import { useStoreSettings } from "@/lib/use-store-settings";
 
 interface FormData {
   firstName: string;
@@ -30,7 +29,6 @@ interface FormErrors {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getSubtotal, clearCart } = useCartStore();
-  const { settings, loading: settingsLoading } = useStoreSettings();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
@@ -51,12 +49,8 @@ export default function CheckoutPage() {
 
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const shippingCost = parseFloat(settings.shippingCost) || 0;
-  const freeThreshold = parseFloat(settings.freeShippingThreshold) || 0;
-  const taxPercent = parseFloat(settings.taxRate) || 0;
-
-  const shipping = getSubtotal() >= freeThreshold ? 0 : shippingCost;
-  const tax = Math.round(getSubtotal() * (taxPercent / 100));
+  const shipping = 0; // Free shipping
+  const tax = Math.round(getSubtotal() * 0.05); // 5% tax
   const total = getSubtotal() + shipping + tax;
 
   const validateStep1 = (): boolean => {
@@ -106,14 +100,6 @@ export default function CheckoutPage() {
     setSubmitting(false);
     toast.success("Order placed successfully!");
   };
-
-  if (settingsLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500" />
-      </div>
-    );
-  }
 
   if (items.length === 0 && !orderPlaced) {
     return (
@@ -253,11 +239,11 @@ export default function CheckoutPage() {
                   </h2>
                   <div className="mt-4 space-y-3">
                     {[
-                      settings.enableCOD && { value: "cod", label: "Cash on Delivery", desc: "Pay when you receive your order" },
-                      settings.enableCard && { value: "card", label: "Credit/Debit Card", desc: "Visa, Mastercard supported" },
-                      settings.enableEasyPaisa && { value: "easypaisa", label: "EasyPaisa / JazzCash", desc: "Mobile wallet payment" },
-                      settings.enableBankTransfer && { value: "bank", label: "Bank Transfer", desc: "Direct bank transfer" },
-                    ].filter(Boolean).map((method: any) => (
+                      { value: "cod", label: "Cash on Delivery", desc: "Pay when you receive your order" },
+                      { value: "card", label: "Credit/Debit Card", desc: "Visa, Mastercard supported" },
+                      { value: "easypaisa", label: "EasyPaisa / JazzCash", desc: "Mobile wallet payment" },
+                      { value: "bank", label: "Bank Transfer", desc: "Direct bank transfer" },
+                    ].map((method) => (
                       <label key={method.value} className={`flex items-center gap-4 rounded-xl border p-4 cursor-pointer transition-colors ${form.paymentMethod === method.value ? "border-gold-500 bg-gold-500/5" : "border-border hover:border-muted-foreground"}`}>
                         <input type="radio" name="paymentMethod" value={method.value} checked={form.paymentMethod === method.value} onChange={handleInputChange} className="accent-gold-500" />
                         <div>
@@ -346,10 +332,10 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
-                <span className="font-medium">{shipping === 0 ? <span className="text-green-500">Free</span> : formatPrice(shipping)}</span>
+                <span className="font-medium text-green-500">Free</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Tax ({taxPercent}%)</span>
+                <span className="text-muted-foreground">Tax (5%)</span>
                 <span className="font-medium">{formatPrice(tax)}</span>
               </div>
               <div className="flex justify-between border-t border-border pt-2 text-base">

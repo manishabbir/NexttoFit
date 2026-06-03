@@ -1,234 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, Edit, Trash2, Eye, Star, StarOff, Save, X, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
-import { ImageUploader } from "@/components/admin/ImageUploader";
 
-interface ProductImage {
-  url: string;
-  alt?: string;
-  isPrimary: boolean;
-  id?: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  sku: string;
-  price: number;
-  comparePrice?: number | null;
-  quantity: number;
-  isActive: boolean;
-  isFeatured: boolean;
-  isNewArrival: boolean;
-  isOnSale: boolean;
-  images: ProductImage[];
-}
-
-interface ProductForm {
-  id?: string;
-  name: string;
-  slug: string;
-  sku: string;
-  price: string;
-  comparePrice: string;
-  quantity: string;
-  description: string;
-  isActive: boolean;
-  isFeatured: boolean;
-  isNewArrival: boolean;
-  isOnSale: boolean;
-  imageUrl: string;
-}
-
-const emptyForm: ProductForm = {
-  name: "", slug: "", sku: "", price: "", comparePrice: "", quantity: "0",
-  description: "", isActive: true, isFeatured: false, isNewArrival: false, isOnSale: false, imageUrl: "",
-};
+const products = [
+  { id: "1", name: "Premium Executive Suit", sku: "NF-SUIT-001", price: 18500, stock: 15, status: "Active", category: "Suits", image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=100&q=80" },
+  { id: "2", name: "Luxury Cashmere Blend Coat", sku: "NF-COAT-001", price: 32000, stock: 8, status: "Active", category: "Coats", image: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=100&q=80" },
+  { id: "3", name: "Designer Kurta Shalwar", sku: "NF-KURTA-001", price: 12500, stock: 25, status: "Active", category: "Traditional", image: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=100&q=80" },
+  { id: "4", name: "Italian Leather Loafers", sku: "NF-SHOE-001", price: 15800, stock: 12, status: "Active", category: "Accessories", image: "https://images.unsplash.com/photo-1531310197839-ccf546a09c7f?w=100&q=80" },
+  { id: "5", name: "Silk Evening Gown", sku: "NF-GOWN-001", price: 28000, stock: 5, status: "Draft", category: "Designer", image: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=100&q=80" },
+  { id: "6", name: "Handcrafted Leather Bag", sku: "NF-BAG-001", price: 22500, stock: 10, status: "Active", category: "Accessories", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=100&q=80" },
+];
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [editing, setEditing] = useState<ProductForm | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => { fetchProducts(); }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
-    } catch (error) { console.error("Error:", error); }
-    finally { setLoading(false); }
-  };
-
-  const toggleFeatured = async (product: Product) => {
-    try {
-      const res = await fetch("/api/products", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: product.id, isFeatured: !product.isFeatured }),
-      });
-      if (res.ok) {
-        toast.success(product.isFeatured ? "Removed from featured" : "Added to featured");
-        fetchProducts();
-      }
-    } catch { toast.error("Failed to update"); }
-  };
-
-  const openEdit = (product: Product) => {
-    const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
-    setEditing({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      sku: product.sku,
-      price: product.price.toString(),
-      comparePrice: product.comparePrice?.toString() || "",
-      quantity: product.quantity.toString(),
-      description: "",
-      isActive: product.isActive,
-      isFeatured: product.isFeatured,
-      isNewArrival: product.isNewArrival,
-      isOnSale: product.isOnSale,
-      imageUrl: primaryImage?.url || "",
-    });
-    setShowForm(true);
-  };
-
-  const openNew = () => {
-    setEditing({ ...emptyForm, sku: `NF-${Date.now().toString(36).toUpperCase()}` });
-    setShowForm(true);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editing) return;
-    if (!editing.name || !editing.price) {
-      toast.error("Name and price are required");
-      return;
-    }
-    setSaving(true);
-    try {
-      const body = {
-        name: editing.name,
-        slug: editing.slug || editing.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-        sku: editing.sku,
-        price: editing.price,
-        comparePrice: editing.comparePrice || null,
-        quantity: editing.quantity,
-        isActive: editing.isActive,
-        isFeatured: editing.isFeatured,
-        isNewArrival: editing.isNewArrival,
-        isOnSale: editing.isOnSale,
-        imageUrl: editing.imageUrl,
-        description: editing.description || "Product description",
-      };
-
-      const res = await fetch("/api/products", {
-        method: editing.id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editing.id ? { id: editing.id, ...body } : body),
-      });
-
-      if (res.ok) {
-        toast.success(editing.id ? "Product updated!" : "Product created!");
-        setShowForm(false);
-        setEditing(null);
-        fetchProducts();
-      } else {
-        const err = await res.json();
-        toast.error(err.error || "Failed to save");
-      }
-    } catch { toast.error("Error saving"); }
-    finally { setSaving(false); }
-  };
-
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const featuredCount = products.filter((p) => p.isFeatured).length;
-
-  if (loading) {
-    return <div className="p-6 animate-pulse space-y-4"><div className="h-8 w-48 rounded bg-muted" /><div className="h-96 rounded-2xl bg-muted" /></div>;
-  }
-
-  if (showForm && editing) {
-    return (
-      <div className="p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <button onClick={() => { setShowForm(false); setEditing(null); }} className="text-sm text-gold-500 hover:text-gold-400 mb-1 block">← Back to Products</button>
-            <h1 className="text-2xl font-bold">{editing.id ? "Edit Product" : "Add Product"}</h1>
-          </div>
-          <button onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black hover:bg-gold-600 disabled:opacity-50">
-            <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Product"}
-          </button>
-        </div>
-        <div className="max-w-2xl space-y-6">
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Product Details</h2>
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Product Name *</label>
-                  <input type="text" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Slug</label>
-                  <input type="text" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value })} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-mono focus:border-gold-500 focus:outline-none" />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">SKU</label>
-                  <input type="text" value={editing.sku} onChange={(e) => setEditing({ ...editing, sku: e.target.value })} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-mono focus:border-gold-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Description</label>
-                  <input type="text" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Price (Rs.) *</label>
-                  <input type="number" value={editing.price} onChange={(e) => setEditing({ ...editing, price: e.target.value })} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Compare Price</label>
-                  <input type="number" value={editing.comparePrice} onChange={(e) => setEditing({ ...editing, comparePrice: e.target.value })} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Stock Quantity</label>
-                  <input type="number" value={editing.quantity} onChange={(e) => setEditing({ ...editing, quantity: e.target.value })} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Product Image</label>
-                <ImageUploader
-                  imageUrl={editing.imageUrl}
-                  onImageChange={(url) => setEditing((prev) => prev ? { ...prev, imageUrl: url } : prev)}
-                />
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <ToggleSwitch label="Active" value={editing.isActive} onChange={(v) => setEditing({ ...editing, isActive: v })} />
-                <ToggleSwitch label="Featured" value={editing.isFeatured} onChange={(v) => setEditing({ ...editing, isFeatured: v })} />
-                <ToggleSwitch label="New Arrival" value={editing.isNewArrival} onChange={(v) => setEditing({ ...editing, isNewArrival: v })} />
-                <ToggleSwitch label="On Sale" value={editing.isOnSale} onChange={(v) => setEditing({ ...editing, isOnSale: v })} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6">
@@ -237,91 +24,115 @@ export default function AdminProductsPage() {
           <h1 className="text-2xl font-bold">Products</h1>
           <p className="text-sm text-muted-foreground">Manage your product catalog</p>
         </div>
-        <button onClick={openNew} className="flex items-center gap-2 rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
-          <Plus className="h-4 w-4" /> Add Product
+        <button className="flex items-center gap-2 rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
+          <Plus className="h-4 w-4" />
+          Add Product
         </button>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-4 mb-6">
         {[
-          { label: "Total Products", value: products.length.toString(), change: "In catalog" },
-          { label: "Featured", value: featuredCount.toString(), change: "On homepage" },
-          { label: "Active", value: products.filter((p) => p.isActive).length.toString(), change: "Visible" },
-          { label: "On Sale", value: products.filter((p) => p.isOnSale).length.toString(), change: "Discounted" },
+          { label: "Total Products", value: "456", change: "+12 this month" },
+          { label: "Active", value: "423", change: "92.8%" },
+          { label: "Low Stock", value: "8", change: "Needs attention" },
+          { label: "Drafts", value: "25", change: "Not published" },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <p className="text-xl font-bold mt-1">{stat.value}</p>
-            <p className="text-xs text-gold-500 mt-0.5">{stat.change}</p>
+            <p className="text-sm text-muted-foreground">{stat.label}</p>
+            <p className="text-2xl font-bold mt-1">{stat.value}</p>
+            <p className="text-xs text-gold-500 mt-1">{stat.change}</p>
           </div>
         ))}
       </div>
 
-      <div className="relative mb-4 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search products..." className="w-full rounded-xl border border-border bg-background pl-10 pr-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
+      {/* Search & Filters */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search products..."
+            className="w-full rounded-xl border border-border bg-background pl-10 pr-4 py-2.5 text-sm placeholder:text-muted-foreground focus:border-gold-500 focus:outline-none"
+          />
+        </div>
+        <select className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none">
+          <option>All Categories</option>
+          <option>Suits</option>
+          <option>Casual</option>
+          <option>Traditional</option>
+          <option>Accessories</option>
+        </select>
+        <select className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none">
+          <option>All Status</option>
+          <option>Active</option>
+          <option>Draft</option>
+          <option>Archived</option>
+        </select>
       </div>
 
-      {products.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-border p-16 text-center">
-          <p className="text-lg font-semibold mb-2">No products yet</p>
-          <p className="text-sm text-muted-foreground mb-4">Click "Add Product" to create one</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredProducts.map((product, i) => {
-            const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
-            return (
-              <motion.div key={product.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-                className="rounded-2xl border border-border bg-card p-4 hover:bg-muted/30 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-xl bg-muted overflow-hidden flex-shrink-0">
-                    {primaryImage && <img src={primaryImage.url} alt={product.name} className="h-full w-full object-cover" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate">{product.name}</p>
-                      {product.isFeatured && <span className="rounded-full bg-gold-500/20 px-2 py-0.5 text-[10px] font-medium text-gold-500">Featured</span>}
-                      {product.isNewArrival && <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-500">New</span>}
-                      {product.isOnSale && <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-500">Sale</span>}
+      {/* Products Table */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Product</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">SKU</th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Category</th>
+                <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Price</th>
+                <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Stock</th>
+                <th className="text-center py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((product, i) => (
+                <motion.tr
+                  key={product.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                >
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                        <img src={product.image} alt="" className="h-full w-full object-cover" />
+                      </div>
+                      <span className="text-sm font-medium">{product.name}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">SKU: {product.sku}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-sm font-semibold">Rs.{Number(product.price).toLocaleString()}</span>
-                      {product.comparePrice && <span className="text-xs text-muted-foreground line-through">Rs.{Number(product.comparePrice).toLocaleString()}</span>}
-                      <span className="text-xs text-muted-foreground">Stock: {product.quantity}</span>
+                  </td>
+                  <td className="py-3 px-4 text-sm text-muted-foreground">{product.sku}</td>
+                  <td className="py-3 px-4"><span className="rounded-full bg-gold-500/10 px-3 py-1 text-xs text-gold-500">{product.category}</span></td>
+                  <td className="py-3 px-4 text-right text-sm font-medium">₹{product.price.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-right">
+                    <span className={`text-sm font-medium ${product.stock < 10 ? "text-destructive" : "text-green-500"}`}>
+                      {product.stock}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <span className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      product.status === "Active" ? "bg-green-500/20 text-green-500" :
+                      product.status === "Draft" ? "bg-yellow-500/20 text-yellow-500" :
+                      "bg-muted text-muted-foreground"
+                    }`}>{product.status}</span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <button className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"><Eye className="h-4 w-4" /></button>
+                      <button className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"><Edit className="h-4 w-4" /></button>
+                      <button className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => toggleFeatured(product)}
-                      className={`rounded-lg p-2 transition-colors ${product.isFeatured ? "text-gold-500 hover:bg-gold-500/10" : "text-muted-foreground hover:bg-muted"}`}
-                      title={product.isFeatured ? "Remove from featured" : "Add to featured"}>
-                      {product.isFeatured ? <Star className="h-4 w-4" /> : <StarOff className="h-4 w-4" />}
-                    </button>
-                    <button onClick={() => openEdit(product)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <Link href={`/product/${product.slug}`} target="_blank" className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-    </div>
-  );
-}
-
-function ToggleSwitch({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <div className="flex items-center justify-between rounded-lg border border-border p-3">
-      <span className="text-xs font-medium">{label}</span>
-      <button type="button" onClick={() => onChange(!value)} className={`relative h-5 w-9 rounded-full transition-colors ${value ? "bg-gold-500" : "bg-muted"}`}>
-        <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${value ? "translate-x-4" : "translate-x-0"}`} />
-      </button>
+      </div>
     </div>
   );
 }

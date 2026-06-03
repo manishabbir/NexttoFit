@@ -1,266 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, Edit, Trash2, Eye, ToggleLeft, ToggleRight, Save, X, Image as ImageIcon, Link as LinkIcon, Upload } from "lucide-react";
-import Link from "next/link";
-import { toast } from "sonner";
-import { ImageUploader } from "@/components/admin/ImageUploader";
+import { Plus, Edit, Trash2, Eye, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState } from "react";
 
-interface Banner {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  imageUrl: string;
-  linkUrl: string;
-  linkText: string;
-  order: number;
-  isActive: boolean;
-  isHero: boolean;
-}
-
-const emptyBanner: Banner = {
-  id: "",
-  title: "",
-  subtitle: "",
-  description: "",
-  imageUrl: "",
-  linkUrl: "",
-  linkText: "Shop Now",
-  order: 1,
-  isActive: true,
-  isHero: true,
-};
+const banners = [
+  { id: "1", title: "Elevate Your Everyday Style", subtitle: "Premium Collection 2024", image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80", active: true, hero: true, order: 1, clicks: 1245 },
+  { id: "2", title: "Redefining Feminine Elegance", subtitle: "Women's Collection", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80", active: true, hero: true, order: 2, clicks: 987 },
+  { id: "3", title: "New Season Now Arriving", subtitle: "Summer 2024", image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&q=80", active: true, hero: true, order: 3, clicks: 756 },
+  { id: "4", title: "Eid Collection 2024", subtitle: "Festive Essentials", image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&q=80", active: false, hero: false, order: 4, clicks: 0 },
+];
 
 export default function AdminBannersPage() {
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Banner | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => {
-    fetchBanners();
-  }, []);
-
-  const fetchBanners = async () => {
-    try {
-      const res = await fetch("/api/banners");
-      const data = await res.json();
-      setBanners(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching banners:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddNew = () => {
-    setEditing({ ...emptyBanner, order: banners.length + 1 });
-    setShowForm(true);
-  };
-
-  const handleEdit = (banner: Banner) => {
-    setEditing({ ...banner });
-    setShowForm(true);
-  };
-
-  const handleDelete = async (banner: Banner) => {
-    if (!confirm(`Delete banner "${banner.title}"?`)) return;
-    try {
-      const res = await fetch("/api/banners", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: banner.id }),
-      });
-      if (res.ok) {
-        toast.success("Banner deleted");
-        fetchBanners();
-      }
-    } catch {
-      toast.error("Failed to delete banner");
-    }
-  };
-
-  const handleToggleActive = async (banner: Banner) => {
-    try {
-      const res = await fetch("/api/banners", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: banner.id, isActive: !banner.isActive }),
-      });
-      if (res.ok) {
-        fetchBanners();
-        toast.success(banner.isActive ? "Banner deactivated" : "Banner activated");
-      }
-    } catch {
-      toast.error("Failed to toggle banner");
-    }
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editing) return;
-
-    if (!editing.title || !editing.imageUrl) {
-      toast.error("Title and image are required");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const method = editing.id ? "PUT" : "POST";
-      const res = await fetch("/api/banners", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editing),
-      });
-
-      if (res.ok) {
-        toast.success(editing.id ? "Banner updated!" : "Banner created!");
-        setShowForm(false);
-        setEditing(null);
-        fetchBanners();
-      } else {
-        toast.error("Failed to save banner");
-      }
-    } catch {
-      toast.error("Error saving banner");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const activeBanners = banners.filter((b) => b.isActive).length;
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded bg-muted" />
-          <div className="h-96 rounded-2xl bg-muted" />
-        </div>
-      </div>
-    );
-  }
-
-  if (showForm && editing) {
-    return (
-      <div className="p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <button onClick={() => { setShowForm(false); setEditing(null); }} className="text-sm text-gold-500 hover:text-gold-400 mb-1 block">
-              ← Back to Banners
-            </button>
-            <h1 className="text-2xl font-bold">{editing.id ? "Edit Banner" : "Add Banner"}</h1>
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600 disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Banner"}
-          </button>
-        </div>
-
-        <div className="max-w-3xl space-y-6">
-          {/* Image Upload - Using reusable ImageUploader component */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><ImageIcon className="h-5 w-5 text-gold-500" /> Banner Image</h2>
-            <ImageUploader
-              imageUrl={editing.imageUrl}
-              onImageChange={(url) => setEditing({ ...editing, imageUrl: url })}
-            />
-          </div>
-
-          {/* Banner Content */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Banner Content</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Title *</label>
-                <input type="text" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} placeholder="ELEVATE YOUR" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Subtitle (gold text)</label>
-                <input type="text" value={editing.subtitle} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} placeholder="EVERYDAY STYLE" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Description</label>
-                <textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} placeholder="Premium craftsmanship meets modern sophistication..." className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none resize-none" />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Button Text</label>
-                  <input type="text" value={editing.linkText} onChange={(e) => setEditing({ ...editing, linkText: e.target.value })} placeholder="Shop Now" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block flex items-center gap-2"><LinkIcon className="h-3 w-3" /> Button Link</label>
-                  <input type="text" value={editing.linkUrl} onChange={(e) => setEditing({ ...editing, linkUrl: e.target.value })} placeholder="/men" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none font-mono" />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Order / Priority</label>
-                  <input type="number" value={editing.order} onChange={(e) => setEditing({ ...editing, order: parseInt(e.target.value) || 1 })} min={1} className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-gold-500 focus:outline-none" />
-                </div>
-                <div className="flex items-end pb-2.5">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <button
-                      type="button"
-                      onClick={() => setEditing({ ...editing, isActive: !editing.isActive })}
-                      className={`relative h-6 w-11 rounded-full transition-colors ${editing.isActive ? "bg-gold-500" : "bg-muted"}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${editing.isActive ? "translate-x-5" : "translate-x-0"}`} />
-                    </button>
-                    <span className="text-sm font-medium">Active</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Preview */}
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Preview</h2>
-            <div className="relative aspect-[21/9] rounded-xl overflow-hidden bg-gradient-to-r from-luxury-950 via-luxury-900 to-luxury-950">
-              {editing.imageUrl && (
-                <img src={editing.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
-              <div className="relative h-full flex flex-col justify-center px-8">
-                <p className="text-xs tracking-widest uppercase text-gold-400 mb-2">Preview</p>
-                <h3 className="text-2xl font-bold text-white">{editing.title}</h3>
-                <p className="text-xl text-gold-400 font-semibold">{editing.subtitle}</p>
-                <p className="text-sm text-white/70 mt-2 max-w-md">{editing.description}</p>
-                <span className="mt-4 inline-flex w-fit rounded-full bg-gold-500 px-6 py-2 text-sm font-semibold text-black">
-                  {editing.linkText || "Shop Now"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Hero Banners</h1>
-          <p className="text-sm text-muted-foreground">Manage homepage hero slider banners</p>
+          <h1 className="text-2xl font-bold">Banners</h1>
+          <p className="text-sm text-muted-foreground">Manage homepage banners and promotions</p>
         </div>
-        <button onClick={handleAddNew} className="flex items-center gap-2 rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
+        <button className="flex items-center gap-2 rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-gold-600">
           <Plus className="h-4 w-4" /> Add Banner
         </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3 mb-6">
         {[
-          { label: "Total Banners", value: banners.length.toString(), change: `${activeBanners} active` },
-          { label: "Active Hero Slides", value: activeBanners.toString(), change: "In carousel" },
-          { label: "Inactive", value: (banners.length - activeBanners).toString(), change: "Hidden" },
+          { label: "Total Banners", value: "6", change: "3 active" },
+          { label: "Hero Banners", value: "3", change: "Carousel" },
+          { label: "Total Clicks", value: "2,988", change: "+15.2%" },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -270,56 +38,38 @@ export default function AdminBannersPage() {
         ))}
       </div>
 
-      {banners.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-border p-16 text-center">
-          <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No banners yet</h3>
-          <p className="text-sm text-muted-foreground mb-6">Create your first hero banner to display on the homepage</p>
-          <button onClick={handleAddNew} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-6 py-3 text-sm font-semibold text-black">
-            <Plus className="h-4 w-4" /> Add Your First Banner
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {banners.map((banner, i) => (
-            <motion.div key={banner.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="rounded-2xl border border-border bg-card overflow-hidden">
-              <div className="flex flex-col sm:flex-row">
-                <div className="h-48 w-full sm:w-72 flex-shrink-0 relative">
-                  <img src={banner.imageUrl} alt={banner.title} className="h-full w-full object-cover" />
-                  {!banner.isActive && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">Inactive</span>
-                    </div>
-                  )}
+      <div className="space-y-4">
+        {banners.map((banner, i) => (
+          <motion.div key={banner.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="flex flex-col sm:flex-row">
+              <div className="h-48 w-full sm:w-72 flex-shrink-0">
+                <img src={banner.image} alt={banner.title} className="h-full w-full object-cover" />
+              </div>
+              <div className="flex-1 p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">{banner.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{banner.subtitle}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {banner.hero && <span className="rounded-full bg-gold-500/20 px-3 py-1 text-xs font-medium text-gold-500">Hero</span>}
+                    <button className={`rounded-lg p-2 transition-colors ${banner.active ? "text-green-500 hover:bg-green-500/10" : "text-muted-foreground hover:bg-muted"}`}>
+                      {banner.active ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+                    </button>
+                    <button className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Edit className="h-4 w-4" /></button>
+                    <button className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                  </div>
                 </div>
-                <div className="flex-1 p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">{banner.title}</h3>
-                      <p className="text-sm text-gold-500 mt-0.5">{banner.subtitle}</p>
-                      {banner.description && (
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{banner.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {banner.isHero && <span className="rounded-full bg-gold-500/20 px-3 py-1 text-xs font-medium text-gold-500">Hero</span>}
-                      <button onClick={() => handleToggleActive(banner)} className={`rounded-lg p-2 transition-colors ${banner.isActive ? "text-green-500 hover:bg-green-500/10" : "text-muted-foreground hover:bg-muted"}`}>
-                        {banner.isActive ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
-                      </button>
-                      <button onClick={() => handleEdit(banner)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Edit className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(banner)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                    <span>Order: {banner.order}</span>
-                    {banner.linkUrl && <span>Link: {banner.linkUrl}</span>}
-                  </div>
+                <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+                  <span>Order: {banner.order}</span>
+                  <span>Clicks: {banner.clicks}</span>
+                  <span className={banner.active ? "text-green-500" : "text-destructive"}>{banner.active ? "Active" : "Inactive"}</span>
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
