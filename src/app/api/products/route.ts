@@ -4,6 +4,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: revalidate every 60 seconds
+
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "ADMIN") {
@@ -13,7 +16,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Find or create category
     let categoryConnect: any = undefined;
     if (body.categoryName) {
       let cat = await prisma.category.findFirst({ where: { name: body.categoryName } });
@@ -70,7 +72,6 @@ export async function GET(request: NextRequest) {
   try {
     const where: Prisma.ProductWhereInput = {};
     
-    // By default only return active products, unless all=true
     if (all !== "true") {
       where.isActive = true;
     }
@@ -99,7 +100,13 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
 
-    return NextResponse.json(products);
+    // Send cache headers so Vercel CDN caches this
+    return new NextResponse(JSON.stringify(products), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
   } catch (error) {
     console.error("Error fetching products:", error);
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });

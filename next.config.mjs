@@ -8,8 +8,16 @@ const nextConfig = {
     minimumCacheTTL: 86400,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "framer-motion", "@radix-ui/react-icons"],
   },
+  // Enable SWC minification (faster builds, smaller bundles)
+  swcMinify: true,
+  // Compress responses with gzip
+  compress: true,
+  // React strict mode off for production performance
+  reactStrictMode: process.env.NODE_ENV === "development",
+  // Enable HTTP/2 server push hinting
+  poweredByHeader: false,
 };
 
 export default nextConfig;

@@ -8,7 +8,12 @@ export async function GET() {
     const banners = await prisma.banner.findMany({
       orderBy: { order: "asc" },
     });
-    return NextResponse.json(banners);
+    return new NextResponse(JSON.stringify(banners), {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Error fetching banners:", error);
     return NextResponse.json({ error: "Failed to fetch banners" }, { status: 500 });
