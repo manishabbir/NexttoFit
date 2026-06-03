@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search, Edit, Trash2, Eye, Star, StarOff, Save, X, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface ProductImage {

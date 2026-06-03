@@ -1,5 +1,11 @@
+import withBundleAnalyzer from "@next/bundle-analyzer";
+
+const withAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig = withAnalyzer({
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
     formats: ["image/avif", "image/webp"],
@@ -18,6 +24,6 @@ const nextConfig = {
   reactStrictMode: process.env.NODE_ENV === "development",
   // Enable HTTP/2 server push hinting
   poweredByHeader: false,
-};
+});
 
 export default nextConfig;

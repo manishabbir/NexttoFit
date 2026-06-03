@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Save, Plus, Trash2, GripVertical, Facebook, Instagram, Twitter, Youtube, Link, Mail, Phone, MapPin } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface FooterLink {
   name: string;

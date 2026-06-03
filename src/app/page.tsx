@@ -1,7 +1,6 @@
 "use client";
 
 import { HeroSection } from "@/components/home/HeroSection";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Shield, Truck, RotateCcw } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -95,10 +94,14 @@ export default function HomePage() {
             {features.map((feature, index) => {
               const Icon = iconMap[feature.icon] || Truck;
               return (
-                <motion.div key={feature.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="flex items-center gap-3">
+                <div
+                  key={feature.title}
+                  className="flex items-center gap-3 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500/10"><Icon className="h-5 w-5 text-gold-500" /></div>
                   <div><p className="text-sm font-medium">{feature.title}</p><p className="text-xs text-muted-foreground">{feature.description}</p></div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -108,10 +111,10 @@ export default function HomePage() {
       {/* Featured Products */}
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-end justify-between mb-10">
+          <div className="animate-fade-in-up flex items-end justify-between mb-10">
             <div><span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">Premium Collection</span><h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">Featured Products</h2></div>
             <Link href="/new-arrivals" className="hidden items-center gap-2 text-sm font-medium text-gold-500 transition-colors hover:text-gold-400 md:flex">View All <ArrowRight className="h-4 w-4" /></Link>
-          </motion.div>
+          </div>
           <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
             {(featuredProducts.length > 0 ? featuredProducts : Array(4).fill(null)).map((product: any, index: number) => {
               if (!product) return <div key={index} className="animate-pulse"><div className="aspect-[3/4] rounded-2xl bg-muted" /><div className="mt-4 space-y-2"><div className="h-4 w-3/4 rounded bg-muted" /><div className="h-3 w-1/2 rounded bg-muted" /></div></div>;
@@ -137,10 +140,17 @@ export default function HomePage() {
       {/* Categories */}
       <section className="py-16 md:py-24 bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12"><span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">Shop by</span><h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">Categories</h2></motion.div>
+          <div className="text-center mb-12 animate-fade-in-up">
+            <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">Shop by</span>
+            <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">Categories</h2>
+          </div>
           <div className="grid gap-6 md:grid-cols-3">
             {categories.map((category: any, index: number) => (
-              <motion.div key={category.name} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
+              <div
+                key={category.name}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
                 <Link href={category.href} className="group block">
                   <div className="relative aspect-[4/5] overflow-hidden rounded-3xl">
                     <OptimizedImage src={category.image} alt={category.name} className="h-full w-full transition-transform duration-700 group-hover:scale-110" sizes="(max-width: 768px) 100vw, 33vw" />
@@ -148,7 +158,7 @@ export default function HomePage() {
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8"><h3 className="font-display text-2xl font-bold text-white md:text-3xl">{category.name}</h3><p className="mt-1 text-sm text-white/60">{category.count}</p></div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -162,7 +172,7 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50" />
           </div>
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="max-w-lg">
+            <div className="max-w-lg animate-slide-in-left">
               <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">{promoBanner.tag}</span>
               <h2 className="mt-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl">{promoBanner.title}<br /><span className="text-gradient-gold">{promoBanner.titleHighlight}</span></h2>
               <p className="mt-6 text-lg leading-relaxed text-white/70">{promoBanner.description}</p>
@@ -170,7 +180,7 @@ export default function HomePage() {
                 <Link href={promoBanner.button1Link} className="inline-flex items-center gap-2 rounded-full bg-gold-500 px-8 py-4 text-sm font-semibold text-black transition-all hover:bg-gold-600">{promoBanner.button1Text} <ArrowRight className="h-4 w-4" /></Link>
                 <Link href={promoBanner.button2Link} className="inline-flex items-center gap-2 rounded-full border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-white/10">{promoBanner.button2Text}</Link>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
       )}
@@ -178,10 +188,10 @@ export default function HomePage() {
       {/* Bestsellers */}
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex items-end justify-between mb-10">
+          <div className="animate-fade-in-up flex items-end justify-between mb-10">
             <div><span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">Best Sellers</span><h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">Most Popular</h2></div>
             <Link href="/men" className="hidden items-center gap-2 text-sm font-medium text-gold-500 transition-colors hover:text-gold-400 md:flex">Shop All <ArrowRight className="h-4 w-4" /></Link>
-          </motion.div>
+          </div>
           <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
             {(bestsellerProducts.length > 0 ? bestsellerProducts : Array(4).fill(null)).map((product: any, index: number) => {
               if (!product) return <div key={index} className="animate-pulse"><div className="aspect-[3/4] rounded-2xl bg-muted" /><div className="mt-4 space-y-2"><div className="h-4 w-3/4 rounded bg-muted" /><div className="h-3 w-1/2 rounded bg-muted" /></div></div>;
@@ -207,13 +217,21 @@ export default function HomePage() {
       {socialSection.enabled && (
         <section className="py-16 md:py-24 bg-card">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10"><span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">{socialSection.title}</span><h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">{socialSection.handle}</h2><p className="mt-2 text-muted-foreground">{socialSection.subtitle}</p></motion.div>
+            <div className="text-center mb-10 animate-fade-in-up">
+              <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gold-500">{socialSection.title}</span>
+              <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">{socialSection.handle}</h2>
+              <p className="mt-2 text-muted-foreground">{socialSection.subtitle}</p>
+            </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               {socialImages.map((img, i) => (
-                <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="relative aspect-square overflow-hidden rounded-2xl group cursor-pointer">
+                <div
+                  key={i}
+                  className="animate-scale-in relative aspect-square overflow-hidden rounded-2xl group cursor-pointer"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
                   <OptimizedImage src={img} alt="Social media post" className="h-full w-full transition-transform duration-500 group-hover:scale-110" sizes="(max-width: 768px) 50vw, 25vw" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><span className="text-white font-medium text-sm">Shop the Look</span></div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>

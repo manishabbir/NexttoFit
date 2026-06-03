@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Edit, Trash2, Eye, ToggleLeft, ToggleRight, Save, X, Image as ImageIcon, Link as LinkIcon, Upload } from "lucide-react";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface Banner {

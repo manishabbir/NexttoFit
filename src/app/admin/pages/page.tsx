@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Save, Eye, Search, CheckCircle, XCircle, RotateCcw, Edit3 } from "lucide-react";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface PageContent {
   [key: string]: any;

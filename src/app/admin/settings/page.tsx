@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Save, Globe, Mail, Bell, Shield, Truck, Percent, CreditCard, DollarSign, Sparkles, ImageIcon, Instagram } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface AnnouncementSettings {
   enabled: boolean;

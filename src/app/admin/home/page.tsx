@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Shield, Truck, RotateCcw, Edit3, X, Save, Image as ImageIcon, Bell, Globe, Instagram, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { HeroSection } from "@/components/home/HeroSection";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 // ============== ICON MAP ==============
 const iconMap: Record<string, React.ElementType> = { Truck, Shield, RotateCcw, Sparkles };
