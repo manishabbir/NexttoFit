@@ -176,6 +176,8 @@ model Product {
   @@index([isFeatured])
   @@index([isNewArrival])
   @@index([isOnSale])
+  @@index([soldCount])
+  @@index([createdAt])
 }
 
 model ProductCategory {
